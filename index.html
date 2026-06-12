@@ -14,14 +14,15 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- PapaParse for CSV parsing -->
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js?v=2"></script>
     <!-- SheetJS for Excel exports -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js?v=2"></script>
     <!-- jsPDF & html2canvas for PDF reports -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js?v=2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js?v=2"></script>
     
     <!-- Link CSS Custom -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body class="dark-theme">
     <!-- Background Decorators -->
@@ -59,7 +60,8 @@
                     <h2><i class="fa-solid fa-sliders"></i> Parameter Desain & LHR</h2>
                 </div>
                 
-                <form id="parameters-form" class="scrollable-form">
+                <form id="parameters-form" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+                    <div class="scrollable-form" style="overflow-y: auto; flex: 1; padding-right: 0.5rem; padding-bottom: 1rem;">
                     <!-- Section 1: Geometri Jalan -->
                     <div class="form-section">
                         <h3 class="section-title"><i class="fa-solid fa-road"></i> Geometri & Struktur Jalan</h3>
@@ -251,8 +253,9 @@
                             </div>
                         </div>
                     </div>
+                    </div> <!-- Tutup scrollable-form -->
                     
-                    <div class="sidebar-footer">
+                    <div class="sidebar-footer" style="background: var(--bg-card); padding-top: 1rem; border-top: 1px solid var(--border-color); z-index: 10;">
                         <button type="submit" id="apply-parameters-btn" class="primary-btn w-100">
                             <i class="fa-solid fa-rotate"></i> Terapkan & Hitung Ulang
                         </button>
@@ -546,7 +549,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Script Utama Program -->
-    <script src="calculations.js"></script>
-    <script src="app.js"></script>
+    <script src="calculations.js?v=2"></script>
+    <script src="app.js?v=2"></script>
 </body>
 </html>
