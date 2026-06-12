@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Otomasi Perhitungan LCCA & Degradasi Perkerasan Jalan</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PapaParse for CSV parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <!-- SheetJS for Excel exports -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- jsPDF & html2canvas for PDF reports -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- Link CSS Custom -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+    <!-- Background Decorators -->
+    <div class="decor-blob blob-1"></div>
+    <div class="decor-blob blob-2"></div>
+    <div class="decor-blob blob-3"></div>
+
+    <div class="app-container">
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="header-content">
+                <div class="logo-area">
+                    <i class="fa-solid fa-road-barrier logo-icon"></i>
+                    <div>
+                        <h1>Sistem Otomasi LCCA & Degradasi Perkerasan</h1>
+                        <p class="subtitle">Berdasarkan Nilai International Roughness Index (IRI) & Panduan MDPJ 2024</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="theme-toggle-btn" class="icon-btn" title="Ganti Tema">
+                        <i class="fa-solid fa-sun icon-sun"></i>
+                        <i class="fa-solid fa-moon icon-moon"></i>
+                    </button>
+                    <div class="header-meta">
+                        <span class="badge badge-primary">ITERA 2026</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="app-body">
+            <!-- SIDEBAR: PARAMETERS INPUT -->
+            <aside class="sidebar-container card">
+                <div class="sidebar-header">
+                    <h2><i class="fa-solid fa-sliders"></i> Parameter Desain & LHR</h2>
+                </div>
+                
+                <form id="parameters-form" class="scrollable-form">
+                    <!-- Section 1: Geometri Jalan -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fa-solid fa-road"></i> Geometri & Struktur Jalan</h3>
+                        <div class="form-group">
+                            <label for="road-name">Nama Ruas Jalan</label>
+                            <input type="text" id="road-name" value="Jalan Ratu Dibalau" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="road-length">Panjang Jalan (km)</label>
+                                <input type="number" id="road-length" value="3.587" step="0.001" min="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="segment-length">Panjang Segmen (m)</label>
+                                <input type="number" id="segment-length" value="100" min="10" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="road-width">Lebar Lajur (W, m)</label>
+                                <input type="number" id="road-width" value="3.5" step="0.1" min="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="road-env-m">Faktor Lingkungan (m)</label>
+                                <select id="road-env-m">
+                                    <option value="0.0300" selected>Lembab / Tropis (m=0.03)</option>
+                                    <option value="0.0230">Sub-Lembab / Tropis (m=0.023)</option>
+                                    <option value="0.0100">Sub-Kering / Tropis (m=0.01)</option>
+                                    <option value="0.0015">Kering / Tropis (m=0.0015)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="road-sn">Structural Number (SN)</label>
+                                <input type="number" id="road-sn" value="3.5" step="0.1" min="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="road-cbr">CBR Tanah Dasar (%)</label>
+                                <input type="number" id="road-cbr" value="6.0" step="0.1" min="1" required>
+                            </div>
+                        </div>
+                        <div class="form-group checkbox-group">
+                            <input type="checkbox" id="kustom-segmen-checkbox">
+                            <label for="kustom-segmen-checkbox">Masukkan SN & CBR berbeda per segmen</label>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Parameter Ekonomi -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fa-solid fa-money-bill-trend-up"></i> Parameter Ekonomi</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="econ-interest">Suku Bunga Nominal (%)</label>
+                                <input type="number" id="econ-interest" value="4.75" step="0.01" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="econ-inflation">Tingkat Inflasi (%)</label>
+                                <input type="number" id="econ-inflation" value="2.72" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <div class="calculated-info">
+                            <span>Suku Bunga Diskonto Riil (r): <strong id="calculated-r">2.03%</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Lalu Lintas & LHR (MDPJ 2024) -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fa-solid fa-truck-moving"></i> LHR & VDF Kendaraan</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="traffic-growth">Laju Pertumbuhan (i, %)</label>
+                                <input type="number" id="traffic-growth" value="3.50" step="0.01" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="traffic-ur">Umur Rencana (UR, Thn)</label>
+                                <input type="number" id="traffic-ur" value="20" min="1" max="50" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="traffic-dd">Distribusi Arah (DD)</label>
+                                <input type="number" id="traffic-dd" value="0.50" step="0.05" min="0.1" max="1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="traffic-dl">Distribusi Lajur (DL)</label>
+                                <input type="number" id="traffic-dl" value="0.80" step="0.05" min="0.1" max="1" required>
+                            </div>
+                        </div>
+
+                        <!-- 8 Golongan LHR & VDF -->
+                        <div class="traffic-grid-header">
+                            <span>Golongan Kendaraan (MDPJ 2024)</span>
+                            <span>LHR (unit)</span>
+                            <span>VDF</span>
+                        </div>
+                        
+                        <div class="traffic-row">
+                            <span class="gol-label" title="Sepeda Motor, skuter, roda 3">Gol 1: Sepeda Motor</span>
+                            <input type="number" class="lhr-input" data-index="0" value="25000" min="0" required>
+                            <input type="number" class="vdf-input" data-index="0" value="0" step="0.01" readonly>
+                        </div>
+                        <div class="traffic-row">
+                            <span class="gol-label" title="Sedan, Jeep, Mobil Penumpang, Minibus, Pick-Up">Gol 2-4: Kend. Ringan</span>
+                            <input type="number" class="lhr-input" data-index="1" value="12500" min="0" required>
+                            <input type="number" class="vdf-input" data-index="1" value="0" step="0.01" readonly>
+                        </div>
+                        <div class="traffic-row">
+                            <span class="gol-label" title="Bus Kecil / Elf / Microbus">Gol 5a: Bus Kecil</span>
+                            <input type="number" class="lhr-input" data-index="2" value="350" min="0" required>
+                            <input type="number" class="vdf-input" data-index="2" value="0.25" step="0.01" required>
+                        </div>
+                        <div class="traffic-row">
+                            <span class="gol-label" title="Bus Besar">Gol 5b: Bus Besar</span>
+                            <input type="number" class="lhr-input" data-index="3" value="180" min="0" required>
+                            <input type="number" class="vdf-input" data-index="3" value="1.20" step="0.01" required>
+                        </div>
+                        <div class="traffic-row">
+                            <span class="gol-label" title="Truk Kecil 2 As, 4 Roda">Gol 6a: Truk Ringan 2 As</span>
+                            <input type="number" class="lhr-input" data-index="4" value="450" min="0" required>
+                            <input type="number" class="vdf-input" data-index="4" value="0.50" step="0.01" required>
+                        </div>
+                        <div class="traffic-row">
+                            <span class="gol-label" title="Truk Sedang 2 As, 6 Roda (Fuso, Medium Truck)">Gol 6b: Truk Sedang 2 As</span>
+                            <input type="number" class="lhr-input" data-index="5" value="280" min="0" required>
+                            <input type="number" class="vdf-input" data-index="5" value="2.90" step="0.01" required>
+                        </div>
+                        <div class="traffic-row">
+                            <span class="gol-label" title="Truk Berat 3 As (Tronton, 10 Roda)">Gol 7a: Truk Berat 3 As</span>
+                            <input type="number" class="lhr-input" data-index="6" value="120" min="0" required>
+                            <input type="number" class="vdf-input" data-index="6" value="14.60" step="0.01" required>
+                        </div>
+                        <div class="traffic-row">
+                            <span class="gol-label" title="Truk Gandeng, Trailer, Semi-Trailer">Gol 7b,c: Truk Trailer/Gandeng</span>
+                            <input type="number" class="lhr-input" data-index="7" value="45" min="0" required>
+                            <input type="number" class="vdf-input" data-index="7" value="18.40" step="0.01" required>
+                        </div>
+                    </div>
+
+                    <!-- Section 4: Batas Trigger Perbaikan & Biaya -->
+                    <div class="form-section">
+                        <h3 class="section-title"><i class="fa-solid fa-screwdriver-wrench"></i> Nilai Trigger IRI & Biaya Perbaikan</h3>
+                        
+                        <div class="form-row header-small">
+                            <span>Tindakan</span>
+                            <span>Trigger IRI</span>
+                            <span>HSP</span>
+                        </div>
+                        <div class="treatment-setting-row">
+                            <label>Rutin</label>
+                            <span class="disabled-placeholder">&lt; Berkala</span>
+                            <input type="number" id="cost-rutin" value="50000" min="0" placeholder="Rp/m2/thn" title="Harga per m2 per tahun" required>
+                        </div>
+                        <div class="treatment-setting-row">
+                            <label title="Overlay Tipis / LTBA">Berkala (LTBA)</label>
+                            <input type="number" id="trigger-berkala" value="4.0" step="0.1" min="1" max="25" required>
+                            <input type="number" id="cost-berkala" value="3800000" min="0" placeholder="Rp/m3" title="Harga per m3 aspal" required>
+                        </div>
+                        <div class="treatment-setting-row">
+                            <label title="Overlay Tebal / Rehab Struktural">Rehabilitasi</label>
+                            <input type="number" id="trigger-rehab" value="8.0" step="0.1" min="1" max="25" required>
+                            <input type="number" id="cost-rehab" value="4200000" min="0" placeholder="Rp/m3" title="Harga per m3 aspal" required>
+                        </div>
+                        <div class="treatment-setting-row">
+                            <label title="Rekonstruksi Penuh">Rekonstruksi</label>
+                            <input type="number" id="trigger-rekon" value="10.0" step="0.1" min="1" max="25" required>
+                            <input type="number" id="cost-rekon" value="4500000" min="0" placeholder="Rp/m3" title="Harga per m3 rekonstruksi" required>
+                        </div>
+                        
+                        <div class="form-group mt-3">
+                            <label for="post-repair-iri">Nilai IRI Pasca-Perbaikan (m/km)</label>
+                            <input type="number" id="post-repair-iri" value="2.0" step="0.1" min="1" max="5" required>
+                        </div>
+
+                        <!-- Tebal Perbaikan -->
+                        <h4 class="sub-section-title mt-3">Tebal Lapisan Perbaikan (m)</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="thick-berkala" title="Tebal LTBA">Tebal Berkala (m)</label>
+                                <input type="number" id="thick-berkala" value="0.03" step="0.01" min="0.01" max="0.1" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="thick-rehab">Tebal Rehab (m)</label>
+                                <input type="number" id="thick-rehab" value="0.05" step="0.01" min="0.01" max="0.15" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="thick-rekon">Tebal Rekon (m)</label>
+                                <input type="number" id="thick-rekon" value="0.10" step="0.01" min="0.01" max="0.3" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" id="apply-parameters-btn" class="primary-btn mt-3 w-100">
+                        <i class="fa-solid fa-rotate"></i> Terapkan & Hitung Ulang
+                    </button>
+                </form>
+            </aside>
+
+            <!-- MAIN MAIN MAIN CONTENT -->
+            <main class="main-content-container">
+                <!-- TABS NAVIGATION -->
+                <div class="tabs-nav card">
+                    <button class="tab-btn active" data-tab="tab-input-iri">
+                        <i class="fa-solid fa-file-excel"></i> 1. Input Data Segmen & IRI
+                    </button>
+                    <button class="tab-btn" data-tab="tab-strip-map">
+                        <i class="fa-solid fa-map-location-dot"></i> 2. Strip Map Kondisi Jalan
+                    </button>
+                    <button class="tab-btn" data-tab="tab-dashboard">
+                        <i class="fa-solid fa-chart-line"></i> 3. Dashboard Hasil & LCCA
+                    </button>
+                </div>
+
+                <!-- TAB 1: INPUT DATA SEGMEN -->
+                <section id="tab-input-iri" class="tab-content active">
+                    <div class="card">
+                        <div class="card-header-split">
+                            <div>
+                                <h2><i class="fa-solid fa-clipboard-list"></i> Data IRI Awal Per Segmen</h2>
+                                <p class="card-desc">Masukkan nilai IRI survei lapangan untuk masing-masing segmen jalan, baik manual maupun unggah via CSV.</p>
+                            </div>
+                            <div class="card-actions">
+                                <button id="download-template-btn" class="secondary-btn btn-sm">
+                                    <i class="fa-solid fa-download"></i> Unduh Template CSV
+                                </button>
+                                <label for="csv-upload" class="primary-btn btn-sm cursor-pointer">
+                                    <i class="fa-solid fa-upload"></i> Unggah CSV
+                                </label>
+                                <input type="file" id="csv-upload" accept=".csv" class="hidden-input">
+                            </div>
+                        </div>
+
+                        <div class="quick-status mt-3 mb-3" id="segments-status-banner">
+                            <i class="fa-solid fa-circle-info text-primary"></i> 
+                            <span>Jumlah segmen saat ini: <strong id="calculated-seg-count">36 segmen</strong> (Berdasarkan pembagian panjang jalan).</span>
+                        </div>
+
+                        <!-- Table Area -->
+                        <div class="table-scroll-container">
+                            <table class="premium-table" id="segments-table">
+                               <thead>
+                                   <tr id="segments-table-header">
+                                       <th width="80">Segmen</th>
+                                       <th width="150">Nama Segmen</th>
+                                       <th width="120">Lintasan 1</th>
+                                       <th width="120">Lintasan 2</th>
+                                       <th width="120">Lintasan 3</th>
+                                       <th width="120" class="avg-header">Rata-Rata IRI</th>
+                                       <th width="100" class="custom-cbr-header hidden-col">CBR (%)</th>
+                                       <th width="100" class="custom-sn-header hidden-col">SN</th>
+                                   </tr>
+                               </thead>
+                               <tbody id="segments-table-body">
+                                   <!-- Dibuat secara dinamis oleh JS -->
+                               </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 2: STRIP MAP KONDISI JALAN -->
+                <section id="tab-strip-map" class="tab-content">
+                    <div class="card">
+                        <h2><i class="fa-solid fa-map-location-dot"></i> Peta Strip Kondisi Jalan (Strip Map)</h2>
+                        <p class="card-desc">Geser slider di bawah untuk melihat simulasi visual perkembangan kondisi perkerasan jalan dari tahun ke-0 hingga tahun ke-20 berdasarkan model degradasi.</p>
+                        
+                        <!-- Slider Control -->
+                        <div class="slider-control-card mt-3">
+                            <div class="slider-header">
+                                <span class="label">Simulasi Tahun Analisis:</span>
+                                <span class="year-display" id="simulation-year-display">Tahun 0 (Kondisi Awal)</span>
+                            </div>
+                            <div class="slider-wrapper">
+                                <button id="play-simulation-btn" class="icon-btn-circle" title="Putar Simulasi">
+                                    <i class="fa-solid fa-play"></i>
+                                </button>
+                                <input type="range" id="simulation-year-slider" min="0" max="20" value="0" class="premium-slider">
+                            </div>
+                        </div>
+
+                        <!-- Legend -->
+                        <div class="legend-container mt-3">
+                            <div class="legend-item"><span class="legend-color legend-good"></span> Baik (IRI &lt; 4)</div>
+                            <div class="legend-item"><span class="legend-color legend-fair"></span> Sedang (IRI 4 - 8)</div>
+                            <div class="legend-item"><span class="legend-color legend-poor"></span> Rusak Ringan (IRI 8 - 12)</div>
+                            <div class="legend-item"><span class="legend-color legend-bad"></span> Rusak Berat (IRI &gt; 12)</div>
+                        </div>
+
+                        <!-- Strip Maps for Scenarios -->
+                        <div class="strip-maps-container mt-4">
+                            <!-- Scenario 1 -->
+                            <div class="scenario-strip-group">
+                                <h3>Skenario 1: Reaktif (Hanya Rutin + Rekonstruksi jika IRI &ge; <span class="trigger-rekon-val">10</span>)</h3>
+                                <div class="strip-wrapper" id="strip-map-sc1">
+                                    <!-- Dinamis -->
+                                </div>
+                            </div>
+
+                            <!-- Scenario 2 -->
+                            <div class="scenario-strip-group">
+                                <h3>Skenario 2: Preventif Berbasis IRI (Overlay Berkala segera saat IRI &ge; <span class="trigger-berkala-val">4</span>)</h3>
+                                <div class="strip-wrapper" id="strip-map-sc2">
+                                    <!-- Dinamis -->
+                                </div>
+                            </div>
+
+                            <!-- Scenario 3 -->
+                            <div class="scenario-strip-group">
+                                <h3>Skenario 3: Rehabilitasi & Rekonstruksi (Penanganan Berat saat IRI &ge; <span class="trigger-rehab-val">8</span>)</h3>
+                                <div class="strip-wrapper" id="strip-map-sc3">
+                                    <!-- Dinamis -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TAB 3: DASHBOARD HASIL & LCCA -->
+                <section id="tab-dashboard" class="tab-content">
+                    <!-- Dashboard Cards -->
+                    <div class="dashboard-grid">
+                        <!-- Summary Card 1 -->
+                        <div class="summary-card glass">
+                            <div class="icon-wrapper bg-danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="info">
+                                <h3>NPV Skenario 1 (Reaktif)</h3>
+                                <span class="value text-danger" id="npv-sc1-display">Rp0</span>
+                                <p class="desc">Biaya Pemeliharaan Total</p>
+                            </div>
+                        </div>
+
+                        <!-- Summary Card 2 -->
+                        <div class="summary-card glass recommended-card">
+                            <div class="recommended-badge"><i class="fa-solid fa-award"></i> Paling Optimal</div>
+                            <div class="icon-wrapper bg-success"><i class="fa-solid fa-shield-halved"></i></div>
+                            <div class="info">
+                                <h3>NPV Skenario 2 (Preventif)</h3>
+                                <span class="value text-success" id="npv-sc2-display">Rp0</span>
+                                <p class="desc">Biaya Pemeliharaan Total</p>
+                            </div>
+                        </div>
+
+                        <!-- Summary Card 3 -->
+                        <div class="summary-card glass">
+                            <div class="icon-wrapper bg-warning"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                            <div class="info">
+                                <h3>NPV Skenario 3 (Rehab/Rekon)</h3>
+                                <span class="value text-warning" id="npv-sc3-display">Rp0</span>
+                                <p class="desc">Biaya Pemeliharaan Total</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comparison Analysis -->
+                    <div class="comparison-banner mt-3" id="savings-analysis-banner">
+                        <i class="fa-solid fa-piggy-bank"></i>
+                        <span>Skenario 2 (Preventif) menghemat biaya LCCA sebesar <strong id="savings-percentage">0%</strong> dibanding Skenario 1 (Reaktif), dengan umur layan optimal.</span>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="charts-grid mt-4">
+                        <!-- Chart LCCA -->
+                        <div class="card chart-card">
+                            <div class="chart-header">
+                                <h2><i class="fa-solid fa-chart-column"></i> Perbandingan NPV Biaya LCCA</h2>
+                                <p class="desc">Semakin rendah nilai NPV, semakin efisien skenario pemeliharaan.</p>
+                            </div>
+                            <div class="chart-body">
+                                <canvas id="chart-lcca-npv"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart Degradasi IRI per Segmen -->
+                        <div class="card chart-card">
+                            <div class="chart-header-split">
+                                <div>
+                                    <h2><i class="fa-solid fa-chart-line"></i> Grafik Proyeksi IRI 20 Tahun</h2>
+                                    <p class="desc">Melihat degradasi IRI per tahun untuk segmen tertentu.</p>
+                                </div>
+                                <div class="selector-container">
+                                    <select id="chart-segment-selector">
+                                        <!-- Dinamis -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="chart-body">
+                                <canvas id="chart-iri-degradation"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sensitivity Analysis -->
+                    <div class="card mt-4">
+                        <h2><i class="fa-solid fa-magnifying-glass-chart"></i> Analisis Sensitivitas (Aproksimasi Fisher)</h2>
+                        <p class="card-desc">Menguji ketangguhan skenario pemeliharaan dengan mengubah tingkat diskonto riil (r) sebesar &plusmn;1% dan &plusmn;2%.</p>
+                        
+                        <div class="charts-grid mt-3">
+                            <div class="table-scroll-container half-width">
+                                <table class="premium-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Variasi r</th>
+                                            <th>Tingkat Bunga Riil (r)</th>
+                                            <th>NPV Skenario 1</th>
+                                            <th>NPV Skenario 2</th>
+                                            <th>NPV Skenario 3</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sensitivity-table-body">
+                                        <!-- Dinamis -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="chart-body half-width">
+                                <canvas id="chart-sensitivity"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Detailed Cash Flow Table -->
+                    <div class="card mt-4">
+                        <div class="card-header-split">
+                            <div>
+                                <h2><i class="fa-solid fa-table-list"></i> Rincian Arus Kas Tahunan (Cash Flow LCCA)</h2>
+                                <p class="desc">Tabel total pengeluaran biaya dan nilai sekarang (present value) tiap tahun untuk seluruh segmen jalan.</p>
+                            </div>
+                            <div class="card-actions">
+                                <button id="export-excel-btn" class="excel-btn">
+                                    <i class="fa-solid fa-file-excel"></i> Ekspor ke Excel (.xlsx)
+                                </button>
+                                <button id="export-pdf-btn" class="pdf-btn">
+                                    <i class="fa-solid fa-file-pdf"></i> Unduh Laporan PDF
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="table-scroll-container mt-3">
+                            <table class="premium-table font-sm" id="cashflow-table">
+                                <thead>
+                                    <tr>
+                                        <th rowspan="2" class="text-center">Tahun</th>
+                                        <th colspan="2" class="text-center bg-sc-1">Skenario 1 (Reaktif)</th>
+                                        <th colspan="2" class="text-center bg-sc-2">Skenario 2 (Preventif)</th>
+                                        <th colspan="2" class="text-center bg-sc-3">Skenario 3 (Rehab/Rekon)</th>
+                                    </tr>
+                                    <tr>
+                                        <th class="bg-sc-1-light">Biaya Riil</th>
+                                        <th class="bg-sc-1-light">Present Value (PV)</th>
+                                        <th class="bg-sc-2-light">Biaya Riil</th>
+                                        <th class="bg-sc-2-light">Present Value (PV)</th>
+                                        <th class="bg-sc-3-light">Biaya Riil</th>
+                                        <th class="bg-sc-3-light">Present Value (PV)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cashflow-table-body">
+                                    <!-- Dinamis -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+        
+        <!-- FOOTER -->
+        <footer class="app-footer">
+            <p>&copy; 2026 Alif Fikri Rahman (122210024). Tugas Akhir Teknik Sipil - Institut Teknologi Sumatera (ITERA).</p>
+        </footer>
+    </div>
+
+    <!-- Script Utama Program -->
+    <script src="calculations.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
