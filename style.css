@@ -738,7 +738,7 @@ body.light-theme .premium-table th {
 .strip-wrapper {
     display: flex;
     flex-wrap: wrap;
-    overflow-x: hidden;
+    overflow: visible;
     border: 1px solid var(--border-color);
     background-color: rgba(0, 0, 0, 0.1);
     padding: 0.5rem;
@@ -761,6 +761,9 @@ body.light-theme .premium-table th {
     position: relative;
     cursor: pointer;
 }
+.strip-seg-box:hover {
+    z-index: 10;
+}
 .strip-seg-box:hover .tooltip {
     display: block;
 }
@@ -777,7 +780,7 @@ body.light-theme .premium-table th {
     font-size: 0.75rem;
     width: 140px;
     text-align: center;
-    z-index: 100;
+    z-index: 999;
     box-shadow: 0 4px 10px rgba(0,0,0,0.5);
     pointer-events: none;
     border: 1px solid var(--border-color);
