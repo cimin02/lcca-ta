@@ -737,8 +737,8 @@ body.light-theme .premium-table th {
 }
 .strip-wrapper {
     display: flex;
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    overflow-x: hidden;
     border: 1px solid var(--border-color);
     background-color: rgba(0, 0, 0, 0.1);
     padding: 0.5rem;
