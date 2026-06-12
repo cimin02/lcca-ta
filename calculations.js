@@ -47,7 +47,7 @@ function projectIRIAndTreatments(segIRI0, segCBR, segSN, roadParams, trafficPara
         thicknessBerkala, thicknessRehab, thicknessRekon
     } = treatmentParams;
 
-    const numYears = 20;
+    const numYears = trafficParams.UR || 20;
     const projections = [];
     
     // Inisialisasi kondisi awal (Tahun 0)
@@ -225,7 +225,8 @@ function runLCCA(segments, roadParams, trafficParams, economicParams, treatmentP
             // Hitung total NPV untuk segmen ini (Jumlah discounted cost tahun 1 s.d. 20)
             // Catatan: Tahun 0 tidak masuk discounted cost karena itu kondisi awal
             let segNPV = 0;
-            for (let y = 1; y <= 20; y++) {
+            const ur = trafficParams.UR || 20;
+            for (let y = 1; y <= ur; y++) {
                 segNPV += projections[y].discountedCost;
             }
 
@@ -277,7 +278,8 @@ function runSensitivityAnalysis(segments, roadParams, trafficParams, economicPar
                     sc
                 );
 
-                for (let y = 1; y <= 20; y++) {
+                const ur = trafficParams.UR || 20;
+                for (let y = 1; y <= ur; y++) {
                     scNPV += projections[y].discountedCost;
                 }
             });

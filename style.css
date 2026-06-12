@@ -345,6 +345,7 @@ body.light-theme #theme-toggle-btn .icon-moon { display: none; }
     overflow-y: auto;
     flex: 1;
     padding-right: 0.5rem;
+    padding-bottom: 1rem;
 }
 /* Scrollbar custom */
 .scrollable-form::-webkit-scrollbar,
@@ -360,6 +361,16 @@ body.light-theme #theme-toggle-btn .icon-moon { display: none; }
 .table-scroll-container::-webkit-scrollbar-thumb {
     background-color: var(--border-color);
     border-radius: var(--radius-full);
+}
+
+.sidebar-footer {
+    position: sticky;
+    bottom: 0;
+    background-color: var(--bg-card);
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+    z-index: 10;
+    margin-top: auto;
 }
 
 .form-section {
@@ -590,7 +601,7 @@ select:focus {
     font-size: 0.85rem;
 }
 .premium-table th {
-    background-color: rgba(0, 0, 0, 0.3);
+    background-color: #1E293B; /* Solid color for dark mode */
     color: var(--text-secondary);
     font-weight: 600;
     padding: 0.75rem 1rem;
@@ -600,7 +611,8 @@ select:focus {
     z-index: 10;
 }
 body.light-theme .premium-table th {
-    background-color: #F3F4F6;
+    background-color: #E5E7EB; /* Solid color for light mode */
+    color: #111827;
 }
 .premium-table td {
     padding: 0.5rem 1rem;
@@ -609,6 +621,9 @@ body.light-theme .premium-table th {
 }
 .premium-table tr:hover {
     background-color: var(--bg-card-hover);
+}
+.premium-table tr:hover td {
+    color: var(--primary); /* Memberikan highlight warna yang jelas saat dihover di dark/light mode */
 }
 .avg-header {
     background-color: rgba(0, 229, 255, 0.05) !important;
@@ -778,11 +793,50 @@ body.light-theme .premium-table th {
     border-color: #000000 transparent transparent transparent;
 }
 
-/* Warna Kondisi */
+/* Warna Kondisi (Default / Dark) */
 .bg-good { background-color: var(--success); }
 .bg-fair { background-color: var(--warning); }
 .bg-poor { background-color: #EF6C00; }
 .bg-bad { background-color: var(--danger); }
+
+/* Warna Kondisi Khusus Light Mode (Agar Teks Kontras) */
+body.light-theme .bg-good { background-color: #4ADE80; }
+body.light-theme .bg-fair { background-color: #FCD34D; }
+body.light-theme .bg-poor { background-color: #FB923C; }
+body.light-theme .bg-bad { background-color: #F87171; }
+
+/* ==================== TOAST POPUP NOTIFICATION ==================== */
+.toast-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.toast {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    border-left: 4px solid var(--primary);
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    transform: translateX(120%);
+    opacity: 0;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+}
+.toast.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+.toast i {
+    color: var(--primary);
+    font-size: 1.2rem;
+}
 
 /* ==================== RESULTS DASHBOARD ==================== */
 .dashboard-grid {

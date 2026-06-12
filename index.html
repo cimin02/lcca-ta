@@ -252,9 +252,11 @@
                         </div>
                     </div>
                     
-                    <button type="submit" id="apply-parameters-btn" class="primary-btn mt-3 w-100">
-                        <i class="fa-solid fa-rotate"></i> Terapkan & Hitung Ulang
-                    </button>
+                    <div class="sidebar-footer">
+                        <button type="submit" id="apply-parameters-btn" class="primary-btn w-100">
+                            <i class="fa-solid fa-rotate"></i> Terapkan & Hitung Ulang
+                        </button>
+                    </div>
                 </form>
             </aside>
 
@@ -310,12 +312,22 @@
                                        <th width="120" class="avg-header">Rata-Rata IRI</th>
                                        <th width="100" class="custom-cbr-header hidden-col">CBR (%)</th>
                                        <th width="100" class="custom-sn-header hidden-col">SN</th>
+                                       <th width="60" class="text-center">Aksi</th>
                                    </tr>
                                </thead>
                                <tbody id="segments-table-body">
                                    <!-- Dibuat secara dinamis oleh JS -->
                                </tbody>
                             </table>
+                        </div>
+                        
+                        <div class="card-actions mt-3" style="justify-content: flex-end; display: flex; gap: 0.5rem;">
+                            <button id="add-segment-btn" class="secondary-btn btn-sm">
+                                <i class="fa-solid fa-plus"></i> Tambah Segmen
+                            </button>
+                            <button id="export-input-csv-btn" class="excel-btn btn-sm">
+                                <i class="fa-solid fa-file-csv"></i> Ekspor Data Input (CSV)
+                            </button>
                         </div>
                     </div>
                 </section>
@@ -529,6 +541,9 @@
             <p>&copy; 2026 Alif Fikri Rahman (122210024). Tugas Akhir Teknik Sipil - Institut Teknologi Sumatera (ITERA).</p>
         </footer>
     </div>
+
+    <!-- Toast Container untuk Pop-up Notifikasi -->
+    <div id="toast-container" class="toast-container"></div>
 
     <!-- Script Utama Program -->
     <script src="calculations.js"></script>

@@ -58,8 +58,13 @@ let appState = {
 
 // ==================== INTI INISIALISASI ====================
 document.addEventListener("DOMContentLoaded", () => {
+    // 0. Load dari LocalStorage
+    const hasLocalData = loadStateFromLocal();
+
     // 1. Generate Data Segmen Default Awal (Jalan Ratu Dibalau)
-    generateDefaultSegments();
+    if (!hasLocalData) {
+        generateDefaultSegments();
+    }
     
     // 2. Setup Event Listeners
     setupTabNavigation();
@@ -69,10 +74,131 @@ document.addEventListener("DOMContentLoaded", () => {
     setupSimulationSlider();
     setupCsvImporter();
     setupExports();
+    setupTableCRUD();
     
     // 3. Hitung Awal & Render UI
-    runCalculations();
+    runCalculations(false);
 });
+
+// ==================== LOCAL STORAGE & TOAST ====================
+function showToast(message) {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+    const toast = document.createElement("div");
+    toast.className = "toast";
+    toast.innerHTML = `<i class="fa-solid fa-check-circle"></i> <span>${message}</span>`;
+    container.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add("show"), 10);
+    setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function saveStateToLocal() {
+    localStorage.setItem('lccaAppState', JSON.stringify({
+        roadParams: appState.roadParams,
+        trafficParams: appState.trafficParams,
+        economicParams: appState.economicParams,
+        treatmentParams: appState.treatmentParams,
+        segments: appState.segments
+    }));
+}
+
+function loadStateFromLocal() {
+    const data = localStorage.getItem('lccaAppState');
+    if (data) {
+        try {
+            const parsed = JSON.parse(data);
+            appState.roadParams = parsed.roadParams || appState.roadParams;
+            appState.trafficParams = parsed.trafficParams || appState.trafficParams;
+            appState.economicParams = parsed.economicParams || appState.economicParams;
+            appState.treatmentParams = parsed.treatmentParams || appState.treatmentParams;
+            appState.segments = parsed.segments || [];
+            
+            document.getElementById("road-name").value = appState.roadParams.name;
+            document.getElementById("road-length").value = appState.roadParams.length;
+            document.getElementById("segment-length").value = appState.roadParams.segLength;
+            document.getElementById("road-width").value = appState.roadParams.width;
+            document.getElementById("road-sn").value = appState.roadParams.SN;
+            document.getElementById("road-cbr").value = appState.roadParams.CBR;
+            document.getElementById("road-env-m").value = appState.roadParams.m;
+            document.getElementById("econ-interest").value = appState.economicParams.i_nominal;
+            document.getElementById("econ-inflation").value = appState.economicParams.inflation;
+            document.getElementById("traffic-ur").value = appState.trafficParams.UR;
+            document.getElementById("traffic-dd").value = appState.trafficParams.DD;
+            document.getElementById("traffic-dl").value = appState.trafficParams.DL;
+            document.getElementById("traffic-growth").value = appState.trafficParams.i;
+            
+            appState.trafficParams.LHR.forEach((val, i) => {
+                const el = document.querySelector(`.lhr-input[data-index="${i}"]`);
+                if(el) el.value = val;
+            });
+            appState.trafficParams.VDF.forEach((val, i) => {
+                const el = document.querySelector(`.vdf-input[data-index="${i}"]`);
+                if(el) el.value = val;
+            });
+
+            document.getElementById("trigger-berkala").value = appState.treatmentParams.triggerBerkala;
+            document.getElementById("trigger-rehab").value = appState.treatmentParams.triggerRehab;
+            document.getElementById("trigger-rekon").value = appState.treatmentParams.triggerRekon;
+            document.getElementById("post-repair-iri").value = appState.treatmentParams.postRepairIRI;
+            document.getElementById("cost-rutin").value = appState.treatmentParams.costRutin;
+            document.getElementById("cost-berkala").value = appState.treatmentParams.costBerkala;
+            document.getElementById("cost-rehab").value = appState.treatmentParams.costRehab;
+            document.getElementById("cost-rekon").value = appState.treatmentParams.costRekon;
+            document.getElementById("thick-berkala").value = appState.treatmentParams.thicknessBerkala;
+            document.getElementById("thick-rehab").value = appState.treatmentParams.thicknessRehab;
+            document.getElementById("thick-rekon").value = appState.treatmentParams.thicknessRekon;
+
+            document.getElementById("calculated-seg-count").innerText = `${appState.segments.length} segmen`;
+            renderSegmentsTable();
+            return true;
+        } catch(e) { return false; }
+    }
+    return false;
+}
+
+// Fitur CRUD Segmen
+function setupTableCRUD() {
+    document.getElementById("add-segment-btn").addEventListener("click", () => {
+        const newId = appState.segments.length > 0 ? Math.max(...appState.segments.map(s => s.id)) + 1 : 1;
+        const defaultCBR = parseFloat(document.getElementById("road-cbr").value) || 6.0;
+        const defaultSN = parseFloat(document.getElementById("road-sn").value) || 3.5;
+        
+        appState.segments.push({
+            id: newId,
+            name: `Segmen ${newId}`,
+            lintasan1: 4.0, lintasan2: 4.0, lintasan3: 4.0, IRI_0: 4.0,
+            CBR: defaultCBR, SN: defaultSN
+        });
+        
+        appState.roadParams.length = (appState.segments.length * appState.roadParams.segLength) / 1000;
+        document.getElementById("road-length").value = appState.roadParams.length.toFixed(3);
+        document.getElementById("calculated-seg-count").innerText = `${appState.segments.length} segmen`;
+        
+        renderSegmentsTable();
+        saveStateToLocal();
+    });
+
+    document.getElementById("export-input-csv-btn").addEventListener("click", () => {
+        const headers = ["No_Segmen", "Nama_Segmen", "Lintasan_1", "Lintasan_2", "Lintasan_3", "Rata_Rata_IRI", "CBR_Persen", "SN_Kekuatan"];
+        let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+        
+        appState.segments.forEach(seg => {
+            csvContent += `${seg.id},${seg.name},${seg.lintasan1},${seg.lintasan2},${seg.lintasan3},${seg.IRI_0},${seg.CBR},${seg.SN}\n`;
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `data_input_lcca_${appState.segments.length}_segmen.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+}
 
 // Membuat segmen dengan data acak realistis untuk simulasi awal
 function generateDefaultSegments() {
@@ -142,8 +268,24 @@ function renderSegmentsTable() {
             <td class="avg-col text-center" id="avg-iri-${seg.id}">${seg.IRI_0.toFixed(2)}</td>
             <td class="${showKustom ? '' : 'hidden-col'}"><input type="number" class="table-num-input" data-id="${seg.id}" data-field="CBR" value="${seg.CBR}" step="0.1"></td>
             <td class="${showKustom ? '' : 'hidden-col'}"><input type="number" class="table-num-input" data-id="${seg.id}" data-field="SN" value="${seg.SN}" step="0.1"></td>
+            <td class="text-center"><button class="icon-btn btn-sm text-danger delete-seg-btn" data-id="${seg.id}" title="Hapus Segmen"><i class="fa-solid fa-trash"></i></button></td>
         `;
         tbody.appendChild(tr);
+    });
+
+    // Event listener Hapus Segmen
+    tbody.querySelectorAll(".delete-seg-btn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            const id = parseInt(e.currentTarget.dataset.id);
+            appState.segments = appState.segments.filter(s => s.id !== id);
+            
+            appState.roadParams.length = (appState.segments.length * appState.roadParams.segLength) / 1000;
+            document.getElementById("road-length").value = appState.roadParams.length.toFixed(3);
+            document.getElementById("calculated-seg-count").innerText = `${appState.segments.length} segmen`;
+            
+            renderSegmentsTable();
+            saveStateToLocal();
+        });
     });
 
     // Bind event inputs pada tabel agar langsung update state
@@ -280,7 +422,8 @@ function renderCashFlowTable() {
     const sc2 = appState.lccaResults.scenarios[2];
     const sc3 = appState.lccaResults.scenarios[3];
 
-    for (let y = 0; y <= 20; y++) {
+    const ur = appState.trafficParams.UR || 20;
+    for (let y = 0; y <= ur; y++) {
         let sc1Cost = 0, sc1PV = 0;
         let sc2Cost = 0, sc2PV = 0;
         let sc3Cost = 0, sc3PV = 0;
@@ -411,7 +554,8 @@ function renderIriDegradationChart(segmentId) {
     const sc2Seg = appState.lccaResults.scenarios[2].segmentsData.find(s => s.segmentId === segmentId);
     const sc3Seg = appState.lccaResults.scenarios[3].segmentsData.find(s => s.segmentId === segmentId);
 
-    const years = Array.from({ length: 21 }, (_, i) => i);
+    const ur = appState.trafficParams.UR || 20;
+    const years = Array.from({ length: ur + 1 }, (_, i) => i);
     const iriSc1 = sc1Seg.projections.map(p => p.IRI);
     const iriSc2 = sc2Seg.projections.map(p => p.IRI);
     const iriSc3 = sc3Seg.projections.map(p => p.IRI);
@@ -581,7 +725,7 @@ function renderSensitivityChart() {
 // ==================== PROCESS CALCULATIONS ====================
 
 // Menghubungkan Form dan State, lalu memicu LCCA & Sensitivity
-function runCalculations() {
+function runCalculations(showNotification = true) {
     // 1. Ambil Nilai dari Form
     appState.roadParams.name = document.getElementById("road-name").value;
     appState.roadParams.length = parseFloat(document.getElementById("road-length").value);
@@ -654,9 +798,17 @@ function runCalculations() {
     // 4. Update Teks Suku Bunga Riil
     document.getElementById("calculated-r").innerText = `${appState.lccaResults.r_riil.toFixed(2)}%`;
 
+    // Update slider max
+    document.getElementById("simulation-year-slider").max = appState.trafficParams.UR;
+
     // 5. Render seluruh tampilan dashboard hasil
     renderDashboard();
     renderStripMaps(appState.currentSimulationYear);
+    
+    saveStateToLocal();
+    if (showNotification) {
+        showToast("Perhitungan berhasil diperbarui!");
+    }
 }
 
 // ==================== BINDING EVENTS & LOGIC ====================
@@ -718,7 +870,7 @@ function setupThemeToggle() {
 function setupFormSubmit() {
     document.getElementById("parameters-form").addEventListener("submit", (e) => {
         e.preventDefault();
-        runCalculations();
+        runCalculations(true);
     });
 }
 
@@ -753,11 +905,13 @@ function setupSimulationSlider() {
             playBtn.innerHTML = '<i class="fa-solid fa-pause"></i>';
             appState.isPlayingSimulation = true;
             
-            if (slider.value == 20) slider.value = 0; // Ulang dari awal jika sudah mentok
+            // Jika mencapai akhir (UR), reset ke 0
+            const ur = appState.trafficParams.UR || 20;
+            if (slider.value == ur) slider.value = 0; // Ulang dari awal jika sudah mentok
 
             appState.simulationTimer = setInterval(() => {
                 let currentVal = parseInt(slider.value);
-                if (currentVal < 20) {
+                if (currentVal < ur) {
                     currentVal++;
                     slider.value = currentVal;
                     slider.dispatchEvent(new Event("input"));
@@ -823,6 +977,7 @@ function setupCsvImporter() {
                 }
 
                 // Parse and map columns
+                appState.segments = []; // Menghapus data yang ada
                 const segmentsTemp = [];
                 let hasCbr = false;
                 let hasSn = false;
@@ -992,8 +1147,58 @@ function setupExports() {
     });
 
     // Ekspor Laporan PDF dengan jsPDF
-    pdfBtn.addEventListener("click", () => {
-        // Tampilkan prompt download/cetak PDF melalui browser built-in print yang sudah diformat rapi
-        window.print();
+    pdfBtn.addEventListener("click", async () => {
+        if (!appState.lccaResults) {
+            alert("Belum ada data untuk diekspor. Silakan hitung terlebih dahulu.");
+            return;
+        }
+        
+        pdfBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses PDF...';
+        pdfBtn.disabled = true;
+
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4'); // landscape
+            
+            // Halaman 1: Dashboard Ringkasan
+            const dashboardEl = document.querySelector('.dashboard-grid');
+            const canvasDash = await html2canvas(dashboardEl, { scale: 2 });
+            const imgDash = canvasDash.toDataURL('image/png');
+            
+            doc.setFontSize(16);
+            doc.text(`Laporan LCCA: ${appState.roadParams.name}`, 14, 15);
+            doc.addImage(imgDash, 'PNG', 14, 25, 260, (canvasDash.height * 260) / canvasDash.width);
+            
+            // Halaman berikutnya: Grafik per segmen
+            const selector = document.getElementById("chart-segment-selector");
+            const chartContainer = document.querySelector('.chart-card:nth-child(2) .chart-body');
+            
+            for (let i = 0; i < appState.segments.length; i++) {
+                const seg = appState.segments[i];
+                // Paksa render grafik untuk segmen ini
+                selector.value = seg.id;
+                renderIriDegradationChart(seg.id);
+                
+                // Tunggu sebentar agar animasi Chart.js selesai rendering
+                await new Promise(r => setTimeout(r, 200)); 
+                
+                const canvasChart = await html2canvas(chartContainer, { scale: 2 });
+                const imgChart = canvasChart.toDataURL('image/png');
+                
+                doc.addPage();
+                doc.setFontSize(14);
+                doc.text(`Grafik Proyeksi IRI: ${seg.name}`, 14, 15);
+                doc.addImage(imgChart, 'PNG', 14, 25, 260, (canvasChart.height * 260) / canvasChart.width);
+            }
+            
+            doc.save(`Laporan_LCCA_${appState.roadParams.name.replace(/ /g, "_")}.pdf`);
+            
+        } catch(e) {
+            console.error(e);
+            alert("Terjadi kesalahan saat membuat PDF.");
+        }
+        
+        pdfBtn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Unduh Laporan PDF';
+        pdfBtn.disabled = false;
     });
 }
