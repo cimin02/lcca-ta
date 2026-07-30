@@ -610,6 +610,10 @@ select:focus {
     top: 0;
     z-index: 10;
 }
+.premium-table thead tr:nth-child(2) th {
+    top: 40px; /* Offset untuk header baris kedua */
+    z-index: 9;
+}
 body.light-theme .premium-table th {
     background-color: #E5E7EB; /* Solid color for light mode */
     color: #111827;

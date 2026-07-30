@@ -125,25 +125,6 @@ function projectIRIAndTreatments(segIRI0, segCBR, segSN, roadParams, trafficPara
                 cost = calculateRutinCost(length, segLength, width, costRutin);
                 finalIRI = tempIRI;
             }
-        } 
-        else if (scenarioId === 3) {
-            // Skenario 3: Rehabilitasi & Rekonstruksi (Penanganan Berat)
-            if (tempIRI >= triggerRekon) {
-                treatment = "Rekonstruksi";
-                cost = calculateTreatmentCost(length, segLength, width, thicknessRekon, costRekon);
-                finalIRI = postRepairIRI;
-                t_virtual = 0;
-                currentSNC = initialSNC;
-            } else if (tempIRI >= triggerRehab) {
-                treatment = "Rehabilitasi";
-                cost = calculateTreatmentCost(length, segLength, width, thicknessRehab, costRehab);
-                finalIRI = postRepairIRI;
-                // Rehabilitasi / Overlay tebal tidak mereset umur struktural ke 0
-            } else {
-                treatment = "Pemeliharaan Rutin";
-                cost = calculateRutinCost(length, segLength, width, costRutin);
-                finalIRI = tempIRI;
-            }
         }
 
         // Hitung Present Value (PV) Biaya menggunakan discount rate riil (r_riil)
@@ -199,13 +180,12 @@ function runLCCA(segments, roadParams, trafficParams, economicParams, treatmentP
         r_riil,
         scenarios: {
             1: { name: "Skenario 1 (Reaktif)", totalNPV: 0, segmentsData: [] },
-            2: { name: "Skenario 2 (Preventif)", totalNPV: 0, segmentsData: [] },
-            3: { name: "Skenario 3 (Rehabilitasi)", totalNPV: 0, segmentsData: [] }
+            2: { name: "Skenario 2 (Preventif)", totalNPV: 0, segmentsData: [] }
         }
     };
 
-    // Proses untuk tiap Skenario (1, 2, 3)
-    for (let scenarioId = 1; scenarioId <= 3; scenarioId++) {
+    // Proses untuk tiap Skenario (1, 2)
+    for (let scenarioId = 1; scenarioId <= 2; scenarioId++) {
         let scenarioNPV = 0;
         const segmentsData = [];
 
@@ -261,10 +241,10 @@ function runSensitivityAnalysis(segments, roadParams, trafficParams, economicPar
         
         // Jalankan LCCA dengan tingkat diskonto riil buatan
         const testResults = {
-            scenarios: { 1: 0, 2: 0, 3: 0 }
+            scenarios: { 1: 0, 2: 0 }
         };
 
-        for (let sc = 1; sc <= 3; sc++) {
+        for (let sc = 1; sc <= 2; sc++) {
             let scNPV = 0;
             segments.forEach(seg => {
                 const projections = projectIRIAndTreatments(
@@ -290,8 +270,7 @@ function runSensitivityAnalysis(segments, roadParams, trafficParams, economicPar
             delta: delta,
             r_value: test_r,
             npv_sc1: testResults.scenarios[1],
-            npv_sc2: testResults.scenarios[2],
-            npv_sc3: testResults.scenarios[3]
+            npv_sc2: testResults.scenarios[2]
         });
     });
 

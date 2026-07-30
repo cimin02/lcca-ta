@@ -22,7 +22,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js?v=2"></script>
     
     <!-- Link CSS Custom -->
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body class="dark-theme">
     <!-- Background Decorators -->
@@ -306,16 +306,19 @@
                         <div class="table-scroll-container">
                             <table class="premium-table" id="segments-table">
                                <thead>
-                                   <tr id="segments-table-header">
-                                       <th width="80">Segmen</th>
-                                       <th width="150">Nama Segmen</th>
+                                   <tr id="segments-table-header-row1">
+                                       <th rowspan="2" width="60" class="text-center">No</th>
+                                       <th rowspan="2" width="150">Nama Segmen</th>
+                                       <th id="lintasan-header-colspan" colspan="3" class="text-center">Survei IRI (m/km)</th>
+                                       <th rowspan="2" width="120" class="text-center bg-highlight">Rata-Rata IRI</th>
+                                       <th rowspan="2" width="100" class="custom-cbr-header hidden-col">CBR (%)</th>
+                                       <th rowspan="2" width="100" class="custom-sn-header hidden-col">SN</th>
+                                       <th rowspan="2" width="60" class="text-center">Aksi</th>
+                                   </tr>
+                                   <tr id="segments-table-header-row2">
                                        <th width="120">Lintasan 1</th>
                                        <th width="120">Lintasan 2</th>
                                        <th width="120">Lintasan 3</th>
-                                       <th width="120" class="avg-header">Rata-Rata IRI</th>
-                                       <th width="100" class="custom-cbr-header hidden-col">CBR (%)</th>
-                                       <th width="100" class="custom-sn-header hidden-col">SN</th>
-                                       <th width="60" class="text-center">Aksi</th>
                                    </tr>
                                </thead>
                                <tbody id="segments-table-body">
@@ -380,14 +383,6 @@
                                     <!-- Dinamis -->
                                 </div>
                             </div>
-
-                            <!-- Scenario 3 -->
-                            <div class="scenario-strip-group">
-                                <h3>Skenario 3: Rehabilitasi & Rekonstruksi (Penanganan Berat saat IRI &ge; <span class="trigger-rehab-val">8</span>)</h3>
-                                <div class="strip-wrapper" id="strip-map-sc3">
-                                    <!-- Dinamis -->
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </section>
@@ -413,16 +408,6 @@
                             <div class="info">
                                 <h3>NPV Skenario 2 (Preventif)</h3>
                                 <span class="value text-success" id="npv-sc2-display">Rp0</span>
-                                <p class="desc">Biaya Pemeliharaan Total</p>
-                            </div>
-                        </div>
-
-                        <!-- Summary Card 3 -->
-                        <div class="summary-card glass">
-                            <div class="icon-wrapper bg-warning"><i class="fa-solid fa-screwdriver-wrench"></i></div>
-                            <div class="info">
-                                <h3>NPV Skenario 3 (Rehab/Rekon)</h3>
-                                <span class="value text-warning" id="npv-sc3-display">Rp0</span>
                                 <p class="desc">Biaya Pemeliharaan Total</p>
                             </div>
                         </div>
@@ -478,9 +463,8 @@
                                         <tr>
                                             <th>Variasi r</th>
                                             <th>Tingkat Bunga Riil (r)</th>
-                                            <th>NPV Skenario 1</th>
-                                            <th>NPV Skenario 2</th>
-                                            <th>NPV Skenario 3</th>
+                                            <th>NPV Skenario 1 (Reaktif)</th>
+                                            <th>NPV Skenario 2 (Preventif)</th>
                                         </tr>
                                     </thead>
                                     <tbody id="sensitivity-table-body">
@@ -515,18 +499,15 @@
                             <table class="premium-table font-sm" id="cashflow-table">
                                 <thead>
                                     <tr>
-                                        <th rowspan="2" class="text-center">Tahun</th>
+                                        <th rowspan="2" class="text-center" width="80">Tahun</th>
                                         <th colspan="2" class="text-center bg-sc-1">Skenario 1 (Reaktif)</th>
                                         <th colspan="2" class="text-center bg-sc-2">Skenario 2 (Preventif)</th>
-                                        <th colspan="2" class="text-center bg-sc-3">Skenario 3 (Rehab/Rekon)</th>
                                     </tr>
                                     <tr>
-                                        <th class="bg-sc-1-light">Biaya Riil</th>
-                                        <th class="bg-sc-1-light">Present Value (PV)</th>
-                                        <th class="bg-sc-2-light">Biaya Riil</th>
-                                        <th class="bg-sc-2-light">Present Value (PV)</th>
-                                        <th class="bg-sc-3-light">Biaya Riil</th>
-                                        <th class="bg-sc-3-light">Present Value (PV)</th>
+                                        <th class="bg-sc-1-light text-right">Biaya Riil</th>
+                                        <th class="bg-sc-1-light text-right">Present Value (PV)</th>
+                                        <th class="bg-sc-2-light text-right">Biaya Riil</th>
+                                        <th class="bg-sc-2-light text-right">Present Value (PV)</th>
                                     </tr>
                                 </thead>
                                 <tbody id="cashflow-table-body">
@@ -549,7 +530,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Script Utama Program -->
-    <script src="calculations.js?v=2"></script>
-    <script src="app.js?v=2"></script>
+    <script src="calculations.js?v=5"></script>
+    <script src="app.js?v=5"></script>
 </body>
 </html>

@@ -115,7 +115,23 @@ function loadStateFromLocal() {
             appState.trafficParams = parsed.trafficParams || appState.trafficParams;
             appState.economicParams = parsed.economicParams || appState.economicParams;
             appState.treatmentParams = parsed.treatmentParams || appState.treatmentParams;
-            appState.segments = parsed.segments || [];
+            
+            if (parsed.segments) {
+                appState.segments = parsed.segments.map(seg => {
+                    if (!seg.lintasan) {
+                        const l1 = seg.lintasan1 || seg.IRI_0 || 4.0;
+                        const l2 = seg.lintasan2 || seg.IRI_0 || 4.0;
+                        const l3 = seg.lintasan3 || seg.IRI_0 || 4.0;
+                        return {
+                            ...seg,
+                            lintasan: [l1, l2, l3]
+                        };
+                    }
+                    return seg;
+                });
+            } else {
+                appState.segments = [];
+            }
             
             document.getElementById("road-name").value = appState.roadParams.name;
             document.getElementById("road-length").value = appState.roadParams.length;
@@ -167,11 +183,16 @@ function setupTableCRUD() {
         const defaultCBR = parseFloat(document.getElementById("road-cbr").value) || 6.0;
         const defaultSN = parseFloat(document.getElementById("road-sn").value) || 3.5;
         
+        const trackCount = (appState.segments.length > 0 && appState.segments[0].lintasan) ? appState.segments[0].lintasan.length : 3;
+        const defaultLintasan = Array(trackCount).fill(4.0);
+
         appState.segments.push({
             id: newId,
             name: `Segmen ${newId}`,
-            lintasan1: 4.0, lintasan2: 4.0, lintasan3: 4.0, IRI_0: 4.0,
-            CBR: defaultCBR, SN: defaultSN
+            lintasan: defaultLintasan,
+            IRI_0: 4.0,
+            CBR: defaultCBR,
+            SN: defaultSN
         });
         
         appState.roadParams.length = (appState.segments.length * appState.roadParams.segLength) / 1000;
@@ -183,11 +204,18 @@ function setupTableCRUD() {
     });
 
     document.getElementById("export-input-csv-btn").addEventListener("click", () => {
-        const headers = ["No_Segmen", "Nama_Segmen", "Lintasan_1", "Lintasan_2", "Lintasan_3", "Rata_Rata_IRI", "CBR_Persen", "SN_Kekuatan"];
+        const trackCount = (appState.segments.length > 0 && appState.segments[0].lintasan) ? appState.segments[0].lintasan.length : 3;
+        const headers = ["No_Segmen", "Nama_Segmen"];
+        for (let k = 1; k <= trackCount; k++) {
+            headers.push(`Lintasan_${k}`);
+        }
+        headers.push("Rata_Rata_IRI", "CBR_Persen", "SN_Kekuatan");
+
         let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
         
         appState.segments.forEach(seg => {
-            csvContent += `${seg.id},${seg.name},${seg.lintasan1},${seg.lintasan2},${seg.lintasan3},${seg.IRI_0},${seg.CBR},${seg.SN}\n`;
+            const lintasanVals = seg.lintasan ? seg.lintasan.join(",") : `${seg.IRI_0},${seg.IRI_0},${seg.IRI_0}`;
+            csvContent += `${seg.id},${seg.name},${lintasanVals},${seg.IRI_0},${seg.CBR},${seg.SN}\n`;
         });
 
         const encodedUri = encodeURI(csvContent);
@@ -221,10 +249,12 @@ function generateDefaultSegments() {
         appState.segments.push({
             id: s,
             name: `Segmen ${s} (KM ${((s-1)*segLength/1000).toFixed(3)} - ${(s*segLength/1000).toFixed(3)})`,
-            // 3 lintasan simulasi yang dirata-ratakan
-            lintasan1: Number((finalIRI - 0.2).toFixed(2)),
-            lintasan2: Number((finalIRI + 0.1).toFixed(2)),
-            lintasan3: Number((finalIRI + 0.3).toFixed(2)),
+            // 3 lintasan simulasi awal
+            lintasan: [
+                Number((finalIRI - 0.2).toFixed(2)),
+                Number((finalIRI + 0.1).toFixed(2)),
+                Number((finalIRI + 0.3).toFixed(2))
+            ],
             IRI_0: Number(finalIRI.toFixed(2)),
             CBR: CBR, // CBR default seragam
             SN: SN    // SN default seragam
@@ -255,16 +285,35 @@ function renderSegmentsTable() {
         cbrHeader.classList.add("hidden-col");
         snHeader.classList.add("hidden-col");
     }
+
+    const trackCount = (appState.segments.length > 0 && appState.segments[0].lintasan) ? appState.segments[0].lintasan.length : 3;
+
+    // Update header row 1 & row 2
+    const colspanEl = document.getElementById("lintasan-header-colspan");
+    if (colspanEl) colspanEl.setAttribute("colspan", trackCount);
+
+    const row2El = document.getElementById("segments-table-header-row2");
+    if (row2El) {
+        let subheadersHtml = "";
+        for (let k = 1; k <= trackCount; k++) {
+            subheadersHtml += `<th width="120">Lintasan ${k}</th>`;
+        }
+        row2El.innerHTML = subheadersHtml;
+    }
     
     appState.segments.forEach((seg, idx) => {
         const tr = document.createElement("tr");
+        if (!seg.lintasan) seg.lintasan = [seg.IRI_0, seg.IRI_0, seg.IRI_0];
+
+        let lintasanInputs = "";
+        seg.lintasan.forEach((val, trackIdx) => {
+            lintasanInputs += `<td><input type="number" class="table-num-input lintasan-val" data-id="${seg.id}" data-track="${trackIdx}" value="${val}" step="0.01"></td>`;
+        });
         
         tr.innerHTML = `
             <td class="text-center">${seg.id}</td>
             <td><input type="text" class="table-text-input" data-id="${seg.id}" data-field="name" value="${seg.name}"></td>
-            <td><input type="number" class="table-num-input lintasan-val" data-id="${seg.id}" data-field="lintasan1" value="${seg.lintasan1}" step="0.01"></td>
-            <td><input type="number" class="table-num-input lintasan-val" data-id="${seg.id}" data-field="lintasan2" value="${seg.lintasan2}" step="0.01"></td>
-            <td><input type="number" class="table-num-input lintasan-val" data-id="${seg.id}" data-field="lintasan3" value="${seg.lintasan3}" step="0.01"></td>
+            ${lintasanInputs}
             <td class="avg-col text-center" id="avg-iri-${seg.id}">${seg.IRI_0.toFixed(2)}</td>
             <td class="${showKustom ? '' : 'hidden-col'}"><input type="number" class="table-num-input" data-id="${seg.id}" data-field="CBR" value="${seg.CBR}" step="0.1"></td>
             <td class="${showKustom ? '' : 'hidden-col'}"><input type="number" class="table-num-input" data-id="${seg.id}" data-field="SN" value="${seg.SN}" step="0.1"></td>
@@ -292,23 +341,27 @@ function renderSegmentsTable() {
     tbody.querySelectorAll("input").forEach(input => {
         input.addEventListener("change", (e) => {
             const id = parseInt(e.target.dataset.id);
-            const field = e.target.dataset.field;
-            const val = e.target.type === 'number' ? parseFloat(e.target.value) : e.target.value;
-            
             const segIdx = appState.segments.findIndex(s => s.id === id);
-            if (segIdx !== -1) {
-                appState.segments[segIdx][field] = val;
+            if (segIdx === -1) return;
+
+            if (e.target.classList.contains("lintasan-val")) {
+                const trackIdx = parseInt(e.target.dataset.track);
+                const val = parseFloat(e.target.value) || 0;
+                appState.segments[segIdx].lintasan[trackIdx] = val;
                 
-                // Jika input lintasan diubah, hitung ulang rata-rata
-                if (field.startsWith("lintasan")) {
-                    const s = appState.segments[segIdx];
-                    const l1 = s.lintasan1 || 0;
-                    const l2 = s.lintasan2 || 0;
-                    const l3 = s.lintasan3 || 0;
-                    s.IRI_0 = Number(((l1 + l2 + l3) / 3).toFixed(2));
-                    document.getElementById(`avg-iri-${id}`).innerText = s.IRI_0.toFixed(2);
-                }
+                // Dynamic calculation of average IRI: sum / n
+                const sum = appState.segments[segIdx].lintasan.reduce((acc, curr) => acc + curr, 0);
+                const avg = sum / appState.segments[segIdx].lintasan.length;
+                appState.segments[segIdx].IRI_0 = Number(avg.toFixed(2));
+                
+                const avgEl = document.getElementById(`avg-iri-${id}`);
+                if (avgEl) avgEl.innerText = appState.segments[segIdx].IRI_0.toFixed(2);
+            } else {
+                const field = e.target.dataset.field;
+                const val = e.target.type === 'number' ? parseFloat(e.target.value) : e.target.value;
+                appState.segments[segIdx][field] = val;
             }
+            saveStateToLocal();
         });
     });
 }
@@ -322,11 +375,13 @@ function renderStripMaps(year) {
     document.querySelectorAll(".trigger-berkala-val").forEach(el => el.innerText = triggerBerkala.toFixed(1));
     document.querySelectorAll(".trigger-rehab-val").forEach(el => el.innerText = triggerRehab.toFixed(1));
 
-    for (let sc = 1; sc <= 3; sc++) {
+    for (let sc = 1; sc <= 2; sc++) {
         const container = document.getElementById(`strip-map-sc${sc}`);
+        if (!container) continue;
         container.innerHTML = "";
         
         const scenarioData = appState.lccaResults.scenarios[sc];
+        if (!scenarioData) continue;
         
         scenarioData.segmentsData.forEach(segData => {
             const proj = segData.projections[year];
@@ -372,12 +427,10 @@ function renderStripMaps(year) {
 function renderDashboard() {
     const sc1 = appState.lccaResults.scenarios[1];
     const sc2 = appState.lccaResults.scenarios[2];
-    const sc3 = appState.lccaResults.scenarios[3];
     
     // Terapkan teks card NPV
     document.getElementById("npv-sc1-display").innerText = `Rp ${sc1.totalNPV.toLocaleString('id-ID')}`;
     document.getElementById("npv-sc2-display").innerText = `Rp ${sc2.totalNPV.toLocaleString('id-ID')}`;
-    document.getElementById("npv-sc3-display").innerText = `Rp ${sc3.totalNPV.toLocaleString('id-ID')}`;
     
     // Bandingkan hemat Skenario 2 vs Skenario 1
     const savings = sc1.totalNPV - sc2.totalNPV;
@@ -420,13 +473,11 @@ function renderCashFlowTable() {
     
     const sc1 = appState.lccaResults.scenarios[1];
     const sc2 = appState.lccaResults.scenarios[2];
-    const sc3 = appState.lccaResults.scenarios[3];
 
     const ur = appState.trafficParams.UR || 20;
     for (let y = 0; y <= ur; y++) {
         let sc1Cost = 0, sc1PV = 0;
         let sc2Cost = 0, sc2PV = 0;
-        let sc3Cost = 0, sc3PV = 0;
         
         // Jumlahkan biaya dari seluruh segmen
         sc1.segmentsData.forEach(seg => {
@@ -437,10 +488,6 @@ function renderCashFlowTable() {
             sc2Cost += seg.projections[y].cost;
             sc2PV += seg.projections[y].discountedCost;
         });
-        sc3.segmentsData.forEach(seg => {
-            sc3Cost += seg.projections[y].cost;
-            sc3PV += seg.projections[y].discountedCost;
-        });
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
@@ -449,8 +496,6 @@ function renderCashFlowTable() {
             <td class="text-right bg-sc-1-light">Rp ${sc1PV.toLocaleString('id-ID')}</td>
             <td class="text-right">Rp ${sc2Cost.toLocaleString('id-ID')}</td>
             <td class="text-right bg-sc-2-light font-weight-bold">Rp ${sc2PV.toLocaleString('id-ID')}</td>
-            <td class="text-right">Rp ${sc3Cost.toLocaleString('id-ID')}</td>
-            <td class="text-right bg-sc-3-light">Rp ${sc3PV.toLocaleString('id-ID')}</td>
         `;
         tbody.appendChild(tr);
     }
@@ -469,7 +514,6 @@ function renderSensitivityTable() {
             <td class="text-center">${res.r_value.toFixed(2)}%</td>
             <td class="text-right">Rp ${res.npv_sc1.toLocaleString('id-ID')}</td>
             <td class="text-right font-weight-bold text-success">Rp ${res.npv_sc2.toLocaleString('id-ID')}</td>
-            <td class="text-right">Rp ${res.npv_sc3.toLocaleString('id-ID')}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -490,23 +534,20 @@ function renderLccaNpvChart() {
     appState.charts.lcca = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['Skenario 1 (Reaktif)', 'Skenario 2 (Preventif)', 'Skenario 3 (Rehab/Rekon)'],
+            labels: ['Skenario 1 (Reaktif)', 'Skenario 2 (Preventif)'],
             datasets: [{
                 label: 'Total Net Present Value (NPV)',
                 data: [
                     appState.lccaResults.scenarios[1].totalNPV,
-                    appState.lccaResults.scenarios[2].totalNPV,
-                    appState.lccaResults.scenarios[3].totalNPV
+                    appState.lccaResults.scenarios[2].totalNPV
                 ],
                 backgroundColor: [
                     'rgba(255, 23, 68, 0.6)',  // Red
-                    'rgba(0, 230, 118, 0.7)',  // Green
-                    'rgba(255, 215, 0, 0.6)'   // Gold
+                    'rgba(0, 230, 118, 0.7)'   // Green
                 ],
                 borderColor: [
                     '#FF1744',
-                    '#00E676',
-                    '#FFD700'
+                    '#00E676'
                 ],
                 borderWidth: 2,
                 borderRadius: 8
@@ -552,13 +593,11 @@ function renderIriDegradationChart(segmentId) {
     
     const sc1Seg = appState.lccaResults.scenarios[1].segmentsData.find(s => s.segmentId === segmentId);
     const sc2Seg = appState.lccaResults.scenarios[2].segmentsData.find(s => s.segmentId === segmentId);
-    const sc3Seg = appState.lccaResults.scenarios[3].segmentsData.find(s => s.segmentId === segmentId);
 
     const ur = appState.trafficParams.UR || 20;
     const years = Array.from({ length: ur + 1 }, (_, i) => i);
     const iriSc1 = sc1Seg.projections.map(p => p.IRI);
     const iriSc2 = sc2Seg.projections.map(p => p.IRI);
-    const iriSc3 = sc3Seg.projections.map(p => p.IRI);
 
     const isDark = document.body.classList.contains("dark-theme");
     const textColor = isDark ? '#9CA3AF' : '#4B5563';
@@ -584,14 +623,6 @@ function renderIriDegradationChart(segmentId) {
                     backgroundColor: 'rgba(0, 230, 118, 0.1)',
                     tension: 0.1,
                     borderWidth: 3
-                },
-                {
-                    label: 'Skenario 3 (Rehab/Rekon)',
-                    data: iriSc3,
-                    borderColor: '#FFD700',
-                    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-                    tension: 0.1,
-                    borderWidth: 2
                 }
             ]
         },
@@ -637,7 +668,6 @@ function renderSensitivityChart() {
     const labels = appState.sensitivityResults.map(r => `${r.r_value.toFixed(2)}%`);
     const sc1Data = appState.sensitivityResults.map(r => r.npv_sc1);
     const sc2Data = appState.sensitivityResults.map(r => r.npv_sc2);
-    const sc3Data = appState.sensitivityResults.map(r => r.npv_sc3);
 
     const isDark = document.body.classList.contains("dark-theme");
     const textColor = isDark ? '#9CA3AF' : '#4B5563';
@@ -649,7 +679,7 @@ function renderSensitivityChart() {
             labels: labels,
             datasets: [
                 {
-                    label: 'Skenario 1',
+                    label: 'Skenario 1 (Reaktif)',
                     data: sc1Data,
                     borderColor: '#FF1744',
                     borderWidth: 2,
@@ -664,15 +694,6 @@ function renderSensitivityChart() {
                     borderWidth: 3,
                     pointStyle: 'rect',
                     pointRadius: 6,
-                    fill: false
-                },
-                {
-                    label: 'Skenario 3',
-                    data: sc3Data,
-                    borderColor: '#FFD700',
-                    borderWidth: 2,
-                    pointStyle: 'triangle',
-                    pointRadius: 4,
                     fill: false
                 }
             ]
@@ -698,7 +719,7 @@ function renderSensitivityChart() {
                     grid: { color: gridColor },
                     title: {
                         display: true,
-                        text: 'Total NPV LCCA (Rp)',
+                        text: 'Total NPV (Rp)',
                         color: textColor
                     },
                     ticks: {
@@ -932,7 +953,13 @@ function setupCsvImporter() {
 
     // Unduh template CSV otomatis sesuai jumlah segmen dinamis
     downloadTemplateBtn.addEventListener("click", () => {
-        const headers = ["No_Segmen", "Nama_Segmen", "Lintasan_1", "Lintasan_2", "Lintasan_3", "CBR_Persen", "SN_Kekuatan"];
+        const trackCount = (appState.segments.length > 0 && appState.segments[0].lintasan) ? appState.segments[0].lintasan.length : 3;
+        const headers = ["No_Segmen", "Nama_Segmen"];
+        for (let k = 1; k <= trackCount; k++) {
+            headers.push(`Lintasan_${k}`);
+        }
+        headers.push("CBR_Persen", "SN_Kekuatan");
+
         let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
         
         const expectedSegCount = Math.ceil((appState.roadParams.length * 1000) / appState.roadParams.segLength);
@@ -941,10 +968,11 @@ function setupCsvImporter() {
 
         for (let s = 1; s <= expectedSegCount; s++) {
             const segName = `Segmen ${s}`;
-            const l1 = (4.0 + Math.sin(s) * 1.5).toFixed(2);
-            const l2 = (4.2 + Math.sin(s) * 1.5).toFixed(2);
-            const l3 = (4.1 + Math.sin(s) * 1.5).toFixed(2);
-            csvContent += `${s},${segName},${l1},${l2},${l3},${defaultCBR},${defaultSN}\n`;
+            const lintasanVals = [];
+            for (let k = 1; k <= trackCount; k++) {
+                lintasanVals.push((4.0 + (k * 0.1) + Math.sin(s) * 1.5).toFixed(2));
+            }
+            csvContent += `${s},${segName},${lintasanVals.join(",")},${defaultCBR},${defaultSN}\n`;
         }
 
         const encodedUri = encodeURI(csvContent);
@@ -987,31 +1015,30 @@ function setupCsvImporter() {
                     const name = row.Nama_Segmen || `Segmen ${id}`;
                     
                     // Deteksi kolom lintasan fleksibel
-                    const l1 = parseFloat(row.Lintasan_1) || 0;
-                    const l2 = parseFloat(row.Lintasan_2) || 0;
-                    const l3 = parseFloat(row.Lintasan_3) || 0;
+                    const lintasanKeys = Object.keys(row).filter(key => 
+                        key.toLowerCase().includes("lintasan") || key.toLowerCase().includes("iri_")
+                    );
 
-                    // Mengambil rata-rata dari semua kolom bertipe lintasan
+                    const lintasanValues = [];
                     let sum = 0;
-                    let count = 0;
-                    Object.keys(row).forEach(key => {
-                        if (key.toLowerCase().includes("lintasan") || key.toLowerCase().includes("iri_")) {
-                            const val = parseFloat(row[key]);
-                            if (!isNaN(val)) {
-                                sum += val;
-                                count++;
-                            }
+                    lintasanKeys.forEach(key => {
+                        const val = parseFloat(row[key]);
+                        if (!isNaN(val)) {
+                            lintasanValues.push(val);
+                            sum += val;
                         }
                     });
 
-                    let avgIRI = 0;
-                    if (count > 0) {
-                        avgIRI = sum / count;
-                    } else {
-                        // Fallback jika tidak ada kolom berlabel lintasan
-                        avgIRI = (l1 + l2 + l3) / 3 || 3.0;
+                    // Fallback jika tidak ada kolom berlabel lintasan
+                    if (lintasanValues.length === 0) {
+                        const l1 = parseFloat(row.Lintasan_1) || 3.0;
+                        const l2 = parseFloat(row.Lintasan_2) || 3.0;
+                        const l3 = parseFloat(row.Lintasan_3) || 3.0;
+                        lintasanValues.push(l1, l2, l3);
+                        sum = l1 + l2 + l3;
                     }
 
+                    const avgIRI = sum / lintasanValues.length;
                     const cbrVal = parseFloat(row.CBR_Persen) || appState.roadParams.CBR;
                     const snVal = parseFloat(row.SN_Kekuatan) || appState.roadParams.SN;
 
@@ -1021,9 +1048,7 @@ function setupCsvImporter() {
                     segmentsTemp.push({
                         id: id,
                         name: name,
-                        lintasan1: Number(l1.toFixed(2)) || Number(avgIRI.toFixed(2)),
-                        lintasan2: Number(l2.toFixed(2)) || Number(avgIRI.toFixed(2)),
-                        lintasan3: Number(l3.toFixed(2)) || Number(avgIRI.toFixed(2)),
+                        lintasan: lintasanValues.map(v => Number(v.toFixed(2))),
                         IRI_0: Number(avgIRI.toFixed(2)),
                         CBR: cbrVal,
                         SN: snVal
@@ -1046,7 +1071,7 @@ function setupCsvImporter() {
                 // Render tabel & kalkulasi ulang
                 renderSegmentsTable();
                 runCalculations();
-                alert(`Berhasil mengimpor ${segmentsTemp.length} segmen data dari CSV.`);
+                alert(`Berhasil mengimpor ${segmentsTemp.length} segmen data dengan ${segmentsTemp[0].lintasan.length} lintasan dari CSV.`);
             }
         });
     });
@@ -1077,8 +1102,7 @@ function setupExports() {
             ["RINGKASAN BIAYA NPV LCCA"],
             ["Skenario", "Total NPV (Rupiah)", "Status"],
             ["Skenario 1 (Reaktif)", appState.lccaResults.scenarios[1].totalNPV, ""],
-            ["Skenario 2 (Preventif)", appState.lccaResults.scenarios[2].totalNPV, "Paling Optimal / Ekonomis"],
-            ["Skenario 3 (Rehabilitasi)", appState.lccaResults.scenarios[3].totalNPV, ""]
+            ["Skenario 2 (Preventif)", appState.lccaResults.scenarios[2].totalNPV, "Paling Optimal / Ekonomis"]
         ];
         const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
         XLSX.utils.book_append_sheet(wb, wsSummary, "Ringkasan LCCA");
@@ -1087,17 +1111,16 @@ function setupExports() {
         const cashFlowData = [
             ["DETAIL ARUS KAS TAHUNAN (CASH FLOW LCCA)"],
             [""],
-            ["Tahun", "Skenario 1 - Biaya Riil", "Skenario 1 - PV Cost", "Skenario 2 - Biaya Riil", "Skenario 2 - PV Cost", "Skenario 3 - Biaya Riil", "Skenario 3 - PV Cost"]
+            ["Tahun", "Skenario 1 - Biaya Riil", "Skenario 1 - PV Cost", "Skenario 2 - Biaya Riil", "Skenario 2 - PV Cost"]
         ];
 
         const sc1 = appState.lccaResults.scenarios[1];
         const sc2 = appState.lccaResults.scenarios[2];
-        const sc3 = appState.lccaResults.scenarios[3];
 
-        for (let y = 0; y <= 20; y++) {
+        const ur = appState.trafficParams.UR || 20;
+        for (let y = 0; y <= ur; y++) {
             let sc1Cost = 0, sc1PV = 0;
             let sc2Cost = 0, sc2PV = 0;
-            let sc3Cost = 0, sc3PV = 0;
             
             sc1.segmentsData.forEach(seg => {
                 sc1Cost += seg.projections[y].cost;
@@ -1107,24 +1130,34 @@ function setupExports() {
                 sc2Cost += seg.projections[y].cost;
                 sc2PV += seg.projections[y].discountedCost;
             });
-            sc3.segmentsData.forEach(seg => {
-                sc3Cost += seg.projections[y].cost;
-                sc3PV += seg.projections[y].discountedCost;
-            });
 
-            cashFlowData.push([y, sc1Cost, sc1PV, sc2Cost, sc2PV, sc3Cost, sc3PV]);
+            cashFlowData.push([y, sc1Cost, sc1PV, sc2Cost, sc2PV]);
         }
         const wsCashFlow = XLSX.utils.aoa_to_sheet(cashFlowData);
         XLSX.utils.book_append_sheet(wb, wsCashFlow, "Cash Flow Tahunan");
 
         // 3. Sheet Data Segmen & IRI Awal
+        const trackCount = (appState.segments.length > 0 && appState.segments[0].lintasan) ? appState.segments[0].lintasan.length : 3;
+        const segHeaders = ["No Segmen", "Nama Segmen"];
+        for (let k = 1; k <= trackCount; k++) {
+            segHeaders.push(`Lintasan ${k}`);
+        }
+        segHeaders.push("Rata-Rata IRI Awal (m/km)", "CBR (%)", "SN");
+
         const segmentsData = [
             ["DATA KONDISI SEGMEN JALAN & CBR-SN"],
             [""],
-            ["No Segmen", "Nama Segmen", "Lintasan 1", "Lintasan 2", "Lintasan 3", "Rata-Rata IRI Awal (m/km)", "CBR (%)", "SN"]
+            segHeaders
         ];
         appState.segments.forEach(seg => {
-            segmentsData.push([seg.id, seg.name, seg.lintasan1, seg.lintasan2, seg.lintasan3, seg.IRI_0, seg.CBR, seg.SN]);
+            const row = [seg.id, seg.name];
+            if (seg.lintasan) {
+                seg.lintasan.forEach(v => row.push(v));
+            } else {
+                row.push(seg.IRI_0, seg.IRI_0, seg.IRI_0);
+            }
+            row.push(seg.IRI_0, seg.CBR, seg.SN);
+            segmentsData.push(row);
         });
         const wsSegments = XLSX.utils.aoa_to_sheet(segmentsData);
         XLSX.utils.book_append_sheet(wb, wsSegments, "Data Segmen & IRI Awal");
@@ -1133,11 +1166,11 @@ function setupExports() {
         const sensitivityData = [
             ["ANALISIS SENSITIVITAS TINGKAT DISKONTO"],
             [""],
-            ["Variasi r", "Tingkat Bunga Riil (r)", "NPV Skenario 1 (Reaktif)", "NPV Skenario 2 (Preventif)", "NPV Skenario 3 (Rehab)"]
+            ["Variasi r", "Tingkat Bunga Riil (r)", "NPV Skenario 1 (Reaktif)", "NPV Skenario 2 (Preventif)"]
         ];
         appState.sensitivityResults.forEach(res => {
             const deltaLabel = res.delta === 0 ? "Baseline" : (res.delta > 0 ? `+${res.delta}%` : `${res.delta}%`);
-            sensitivityData.push([deltaLabel, res.r_value, res.npv_sc1, res.npv_sc2, res.npv_sc3]);
+            sensitivityData.push([deltaLabel, res.r_value, res.npv_sc1, res.npv_sc2]);
         });
         const wsSensitivity = XLSX.utils.aoa_to_sheet(sensitivityData);
         XLSX.utils.book_append_sheet(wb, wsSensitivity, "Analisis Sensitivitas");
