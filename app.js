@@ -28,7 +28,7 @@ let appState = {
     treatmentParams: {
         triggerBerkala: 4.0,
         triggerRehab: 8.0,
-        triggerRekon: 10.0,
+        triggerRekon: 8.0,
         postRepairIRI: 2.0,
         costRutin: 50000,
         costBerkala: 3800000,
@@ -432,18 +432,54 @@ function renderDashboard() {
     document.getElementById("npv-sc1-display").innerText = `Rp ${sc1.totalNPV.toLocaleString('id-ID')}`;
     document.getElementById("npv-sc2-display").innerText = `Rp ${sc2.totalNPV.toLocaleString('id-ID')}`;
     
-    // Bandingkan hemat Skenario 2 vs Skenario 1
-    const savings = sc1.totalNPV - sc2.totalNPV;
-    const savingsPercent = sc1.totalNPV > 0 ? ((savings / sc1.totalNPV) * 100).toFixed(2) : 0;
+    // Evaluasi Objektif Skenario Optimal (NPV Terendah Absolut)
+    const cardSc1 = document.getElementById("card-sc1");
+    const cardSc2 = document.getElementById("card-sc2");
     
-    const bannerText = document.getElementById("savings-percentage");
-    if (savings > 0) {
-        bannerText.innerHTML = `Rp ${savings.toLocaleString('id-ID')} (${savingsPercent}%)`;
-        document.getElementById("savings-analysis-banner").className = "comparison-banner mt-3";
+    if (cardSc1) {
+        cardSc1.classList.remove("recommended-card");
+        const badge1 = cardSc1.querySelector(".recommended-badge");
+        if (badge1) badge1.remove();
+    }
+    if (cardSc2) {
+        cardSc2.classList.remove("recommended-card");
+        const badge2 = cardSc2.querySelector(".recommended-badge");
+        if (badge2) badge2.remove();
+    }
+
+    const badgeHtml = `<div class="recommended-badge"><i class="fa-solid fa-award"></i> Paling Optimal</div>`;
+
+    const npv1 = sc1.totalNPV;
+    const npv2 = sc2.totalNPV;
+    
+    const bannerContainer = document.getElementById("savings-analysis-banner");
+
+    if (npv2 < npv1) {
+        // Skenario 2 lebih hemat (NPV lebih rendah)
+        if (cardSc2) {
+            cardSc2.classList.add("recommended-card");
+            cardSc2.insertAdjacentHTML("afterbegin", badgeHtml);
+        }
+        const diff = npv1 - npv2;
+        const percent = npv1 > 0 ? ((diff / npv1) * 100).toFixed(2) : 0;
+        
+        bannerContainer.className = "comparison-banner mt-3";
+        bannerContainer.innerHTML = `<i class="fa-solid fa-piggy-bank"></i> <span>Skenario 2 (Preventif) menghemat biaya LCCA sebesar <strong>Rp ${diff.toLocaleString('id-ID')} (${percent}%)</strong> dibanding Skenario 1 (Reaktif), dengan umur layan optimal.</span>`;
+    } else if (npv1 < npv2) {
+        // Skenario 1 lebih hemat (NPV lebih rendah)
+        if (cardSc1) {
+            cardSc1.classList.add("recommended-card");
+            cardSc1.insertAdjacentHTML("afterbegin", badgeHtml);
+        }
+        const diff = npv2 - npv1;
+        const percent = npv2 > 0 ? ((diff / npv2) * 100).toFixed(2) : 0;
+        
+        bannerContainer.className = "comparison-banner mt-3";
+        bannerContainer.innerHTML = `<i class="fa-solid fa-piggy-bank"></i> <span>Skenario 1 (Reaktif) menghemat biaya LCCA sebesar <strong>Rp ${diff.toLocaleString('id-ID')} (${percent}%)</strong> dibanding Skenario 2 (Preventif).</span>`;
     } else {
-        // Jika skenario 2 tidak lebih hemat
-        bannerText.innerHTML = `0%`;
-        document.getElementById("savings-analysis-banner").className = "comparison-banner mt-3 bg-warning-glow";
+        // Sama persis
+        bannerContainer.className = "comparison-banner mt-3 bg-warning-glow";
+        bannerContainer.innerHTML = `<i class="fa-solid fa-scale-balanced"></i> <span>Kedua skenario memiliki total biaya NPV yang setara (Rp ${npv1.toLocaleString('id-ID')}).</span>`;
     }
 
     // Render Dropdown Pilihan Segmen untuk Grafik IRI
