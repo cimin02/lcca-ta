@@ -623,6 +623,16 @@ body.light-theme .premium-table th {
     border-bottom: 1px solid var(--border-color);
     color: var(--text-primary);
 }
+.premium-table tfoot td {
+    background-color: #1E293B;
+    border-top: 2px solid var(--primary);
+    border-bottom: 2px solid var(--primary);
+    color: var(--text-primary);
+}
+body.light-theme .premium-table tfoot td {
+    background-color: #E5E7EB;
+    color: #111827;
+}
 .premium-table tr:hover {
     background-color: var(--bg-card-hover);
 }

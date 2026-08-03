@@ -559,10 +559,15 @@ function renderDashboard() {
 // Rendering tabel Cash Flow
 function renderCashFlowTable() {
     const tbody = document.getElementById("cashflow-table-body");
+    const tfoot = document.getElementById("cashflow-table-foot");
     tbody.innerHTML = "";
+    if (tfoot) tfoot.innerHTML = "";
     
     const sc1 = appState.lccaResults.scenarios[1];
     const sc2 = appState.lccaResults.scenarios[2];
+
+    let totalSc1Cost = 0, totalSc1PV = 0;
+    let totalSc2Cost = 0, totalSc2PV = 0;
 
     const ur = appState.trafficParams.UR || 20;
     for (let y = 0; y <= ur; y++) {
@@ -579,6 +584,12 @@ function renderCashFlowTable() {
             sc2PV += seg.projections[y].discountedCost;
         });
 
+        // Akumulasi total
+        totalSc1Cost += sc1Cost;
+        totalSc1PV += sc1PV;
+        totalSc2Cost += sc2Cost;
+        totalSc2PV += sc2PV;
+
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td class="text-center font-weight-bold">${y === 0 ? "0 (Awal)" : y}</td>
@@ -588,6 +599,19 @@ function renderCashFlowTable() {
             <td class="text-right bg-sc-2-light font-weight-bold">Rp ${sc2PV.toLocaleString('id-ID')}</td>
         `;
         tbody.appendChild(tr);
+    }
+
+    // Render tfoot total akumulasi biaya
+    if (tfoot) {
+        tfoot.innerHTML = `
+            <tr class="font-weight-bold">
+                <td class="text-center">TOTAL (NPV)</td>
+                <td class="text-right">Rp ${totalSc1Cost.toLocaleString('id-ID')}</td>
+                <td class="text-right bg-sc-1-light">Rp ${totalSc1PV.toLocaleString('id-ID')}</td>
+                <td class="text-right">Rp ${totalSc2Cost.toLocaleString('id-ID')}</td>
+                <td class="text-right bg-sc-2-light font-weight-bold">Rp ${totalSc2PV.toLocaleString('id-ID')}</td>
+            </tr>
+        `;
     }
 }
 
