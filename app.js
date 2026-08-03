@@ -1241,7 +1241,7 @@ function setupExports() {
         segHeaders.push("Rata-Rata IRI Awal (m/km)", "CBR (%)", "SN");
 
         const segmentsData = [
-            ["DATA KONDISI SEGMEN JALAN & CBR-SN"],
+            ["DATA KONDISI SEGMEN JALAN DAN CBR-SN"],
             [""],
             segHeaders
         ];
@@ -1256,7 +1256,7 @@ function setupExports() {
             segmentsData.push(row);
         });
         const wsSegments = XLSX.utils.aoa_to_sheet(segmentsData);
-        XLSX.utils.book_append_sheet(wb, wsSegments, "Data Segmen & IRI Awal");
+        XLSX.utils.book_append_sheet(wb, wsSegments, "Data Segmen dan IRI Awal");
 
         // 4. Sheet Analisis Sensitivitas
         const sensitivityData = [
@@ -1271,8 +1271,23 @@ function setupExports() {
         const wsSensitivity = XLSX.utils.aoa_to_sheet(sensitivityData);
         XLSX.utils.book_append_sheet(wb, wsSensitivity, "Analisis Sensitivitas");
 
-        // Simpan file
-        XLSX.writeFile(wb, `Hasil_Analisis_LCCA_Perkerasan_${appState.roadParams.name.replace(/ /g, "_")}.xlsx`);
+        // Generasi biner .xlsx presisi menggunakan Blob ArrayBuffer
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        
+        const safeRoadName = (appState.roadParams.name || "Jalan").replace(/[^a-zA-Z0-9]/g, "_").replace(/_+/g, "_");
+        const filename = `Hasil_Analisis_LCCA_Perkerasan_${safeRoadName}.xlsx`;
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 100);
     });
 
     // Ekspor Laporan PDF dengan jsPDF
