@@ -1022,6 +1022,42 @@ body.light-theme .bg-bad { background-color: #F87171; }
     background-color: rgba(255, 215, 0, 0.05) !important;
 }
 
+/* Solid Opaque Backgrounds untuk Sticky Header di Dark Theme (Mencegah Transparansi Bleed-Through) */
+.premium-table th.bg-sc-1 {
+    background-color: #4D1B28 !important;
+    color: var(--danger) !important;
+}
+.premium-table th.bg-sc-1-light {
+    background-color: #371E2B !important;
+    color: var(--text-primary) !important;
+}
+.premium-table th.bg-sc-2 {
+    background-color: #164D3A !important;
+    color: var(--success) !important;
+}
+.premium-table th.bg-sc-2-light {
+    background-color: #1B332F !important;
+    color: var(--text-primary) !important;
+}
+
+/* Solid Opaque Backgrounds untuk Sticky Header di Light Theme */
+body.light-theme .premium-table th.bg-sc-1 {
+    background-color: #FAD4D4 !important;
+    color: #B91C1C !important;
+}
+body.light-theme .premium-table th.bg-sc-1-light {
+    background-color: #F7E9E9 !important;
+    color: #111827 !important;
+}
+body.light-theme .premium-table th.bg-sc-2 {
+    background-color: #D2F3DC !important;
+    color: #15803D !important;
+}
+body.light-theme .premium-table th.bg-sc-2-light {
+    background-color: #E8F7ED !important;
+    color: #111827 !important;
+}
+
 /* ==================== FOOTER STYLING ==================== */
 .app-footer {
     padding: 1.5rem 0;
