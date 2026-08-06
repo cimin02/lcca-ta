@@ -93,9 +93,7 @@ function projectIRIAndTreatments(segIRI0, segCBR, segSN, roadParams, trafficPara
         let tempIRI = currentIRI + delta_IRI;
         if (tempIRI < 0) tempIRI = 0;
 
-        let treatment = "Pemeliharaan Rutin";
-        let cost = 0;
-        let finalIRI = tempIRI;
+        let costBreakdown = { rutin: 0, berkala: 0, rehab: 0, rekon: 0 };
 
         // 2. Evaluasi Skenario Tindakan Pemeliharaan
         if (scenarioId === 1) {
@@ -105,14 +103,17 @@ function projectIRIAndTreatments(segIRI0, segCBR, segSN, roadParams, trafficPara
                 treatment = "Pemeliharaan Rutin";
                 cost = calculateRutinCost(length, segLength, width, costRutin);
                 finalIRI = tempIRI;
+                costBreakdown.rutin = Math.round(cost);
             } else if (tempIRI >= 4.0 && tempIRI < 6.0) {
                 treatment = "Pemeliharaan Berkala";
                 cost = calculateTreatmentCost(length, segLength, width, thicknessBerkala, costBerkala);
                 finalIRI = postRepairIRI;
+                costBreakdown.berkala = Math.round(cost);
             } else if (tempIRI >= 6.0 && tempIRI < 8.0) {
                 treatment = "Rehabilitasi Minor";
                 cost = calculateTreatmentCost(length, segLength, width, thicknessRehab, costRehab);
                 finalIRI = postRepairIRI;
+                costBreakdown.rehab = Math.round(cost);
             } else {
                 // tempIRI >= 8.0
                 treatment = "Rekonstruksi / Rehabilitasi Mayor";
@@ -121,6 +122,7 @@ function projectIRIAndTreatments(segIRI0, segCBR, segSN, roadParams, trafficPara
                 // Reset umur struktural (t) dan SNC
                 t_virtual = 0;
                 currentSNC = initialSNC;
+                costBreakdown.rekon = Math.round(cost);
             }
         } 
         else if (scenarioId === 2) {
@@ -130,10 +132,12 @@ function projectIRIAndTreatments(segIRI0, segCBR, segSN, roadParams, trafficPara
                 treatment = "Pemeliharaan Rutin";
                 cost = calculateRutinCost(length, segLength, width, costRutin);
                 finalIRI = tempIRI;
+                costBreakdown.rutin = Math.round(cost);
             } else if (tempIRI >= 6.0 && tempIRI < 10.0) {
                 treatment = "Pemeliharaan Berkala / Overlay Struktural";
                 cost = calculateTreatmentCost(length, segLength, width, thicknessRehab, costRehab);
                 finalIRI = postRepairIRI;
+                costBreakdown.berkala = Math.round(cost);
             } else {
                 // tempIRI >= 10.0
                 treatment = "Rekonstruksi Total";
@@ -142,6 +146,7 @@ function projectIRIAndTreatments(segIRI0, segCBR, segSN, roadParams, trafficPara
                 // Reset umur struktural (t) dan SNC
                 t_virtual = 0;
                 currentSNC = initialSNC;
+                costBreakdown.rekon = Math.round(cost);
             }
         }
 
@@ -155,7 +160,8 @@ function projectIRIAndTreatments(segIRI0, segCBR, segSN, roadParams, trafficPara
             condition: getConditionLabel(finalIRI),
             treatment: treatment,
             cost: Math.round(cost),
-            discountedCost: Math.round(discountedCost)
+            discountedCost: Math.round(discountedCost),
+            costBreakdown: costBreakdown
         });
 
         // Simpan nilai IRI saat ini untuk perhitungan tahun berikutnya

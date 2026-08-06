@@ -556,6 +556,25 @@ function renderDashboard() {
     renderSensitivityChart();
 }
 
+// Helper pembentuk Tooltip Rincian Biaya Segmen
+function buildCostTooltipHtml(breakdown) {
+    if (!breakdown) return '';
+    const items = [];
+    if (breakdown.rutin > 0) items.push(`<div class="tooltip-item"><span>Rutin:</span> <strong>Rp ${breakdown.rutin.toLocaleString('id-ID')}</strong></div>`);
+    if (breakdown.berkala > 0) items.push(`<div class="tooltip-item"><span>Berkala:</span> <strong>Rp ${breakdown.berkala.toLocaleString('id-ID')}</strong></div>`);
+    if (breakdown.rehab > 0) items.push(`<div class="tooltip-item"><span>Rehabilitasi:</span> <strong>Rp ${breakdown.rehab.toLocaleString('id-ID')}</strong></div>`);
+    if (breakdown.rekon > 0) items.push(`<div class="tooltip-item"><span>Rekonstruksi:</span> <strong>Rp ${breakdown.rekon.toLocaleString('id-ID')}</strong></div>`);
+    
+    if (items.length === 0) return '';
+
+    return `
+        <div class="cost-tooltip">
+            <div class="tooltip-title"><i class="fa-solid fa-calculator"></i> Rincian Biaya:</div>
+            ${items.join('')}
+        </div>
+    `;
+}
+
 // Rendering tabel Cash Flow
 function renderCashFlowTable() {
     const tbody = document.getElementById("cashflow-table-body");
@@ -573,15 +592,29 @@ function renderCashFlowTable() {
     for (let y = 0; y <= ur; y++) {
         let sc1Cost = 0, sc1PV = 0;
         let sc2Cost = 0, sc2PV = 0;
+        let sc1Breakdown = { rutin: 0, berkala: 0, rehab: 0, rekon: 0 };
+        let sc2Breakdown = { rutin: 0, berkala: 0, rehab: 0, rekon: 0 };
         
-        // Jumlahkan biaya dari seluruh segmen
+        // Jumlahkan biaya dan rincian dari seluruh segmen
         sc1.segmentsData.forEach(seg => {
             sc1Cost += seg.projections[y].cost;
             sc1PV += seg.projections[y].discountedCost;
+            if (seg.projections[y].costBreakdown) {
+                sc1Breakdown.rutin += seg.projections[y].costBreakdown.rutin || 0;
+                sc1Breakdown.berkala += seg.projections[y].costBreakdown.berkala || 0;
+                sc1Breakdown.rehab += seg.projections[y].costBreakdown.rehab || 0;
+                sc1Breakdown.rekon += seg.projections[y].costBreakdown.rekon || 0;
+            }
         });
         sc2.segmentsData.forEach(seg => {
             sc2Cost += seg.projections[y].cost;
             sc2PV += seg.projections[y].discountedCost;
+            if (seg.projections[y].costBreakdown) {
+                sc2Breakdown.rutin += seg.projections[y].costBreakdown.rutin || 0;
+                sc2Breakdown.berkala += seg.projections[y].costBreakdown.berkala || 0;
+                sc2Breakdown.rehab += seg.projections[y].costBreakdown.rehab || 0;
+                sc2Breakdown.rekon += seg.projections[y].costBreakdown.rekon || 0;
+            }
         });
 
         // Akumulasi total
@@ -593,9 +626,15 @@ function renderCashFlowTable() {
         const tr = document.createElement("tr");
         tr.innerHTML = `
             <td class="text-center font-weight-bold">${y === 0 ? "0 (Awal)" : y}</td>
-            <td class="text-right">Rp ${sc1Cost.toLocaleString('id-ID')}</td>
+            <td class="text-right cost-tooltip-cell">
+                <span>Rp ${sc1Cost.toLocaleString('id-ID')}</span>
+                ${buildCostTooltipHtml(sc1Breakdown)}
+            </td>
             <td class="text-right bg-sc-1-light">Rp ${sc1PV.toLocaleString('id-ID')}</td>
-            <td class="text-right">Rp ${sc2Cost.toLocaleString('id-ID')}</td>
+            <td class="text-right cost-tooltip-cell">
+                <span>Rp ${sc2Cost.toLocaleString('id-ID')}</span>
+                ${buildCostTooltipHtml(sc2Breakdown)}
+            </td>
             <td class="text-right bg-sc-2-light font-weight-bold">Rp ${sc2PV.toLocaleString('id-ID')}</td>
         `;
         tbody.appendChild(tr);
