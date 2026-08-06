@@ -508,19 +508,8 @@ function renderDashboard() {
     
     const bannerContainer = document.getElementById("savings-analysis-banner");
 
-    if (npv2 < npv1) {
-        // Skenario 2 lebih hemat (NPV lebih rendah)
-        if (cardSc2) {
-            cardSc2.classList.add("recommended-card");
-            cardSc2.insertAdjacentHTML("afterbegin", badgeHtml);
-        }
-        const diff = npv1 - npv2;
-        const percent = npv1 > 0 ? ((diff / npv1) * 100).toFixed(2) : 0;
-        
-        bannerContainer.className = "comparison-banner mt-3";
-        bannerContainer.innerHTML = `<i class="fa-solid fa-piggy-bank"></i> <span>Skenario 2 (Preventif) menghemat biaya LCCA sebesar <strong>Rp ${diff.toLocaleString('id-ID')} (${percent}%)</strong> dibanding Skenario 1 (Reaktif), dengan umur layan optimal.</span>`;
-    } else if (npv1 < npv2) {
-        // Skenario 1 lebih hemat (NPV lebih rendah)
+    if (npv1 < npv2) {
+        // Skenario 1 (Preventif) lebih hemat
         if (cardSc1) {
             cardSc1.classList.add("recommended-card");
             cardSc1.insertAdjacentHTML("afterbegin", badgeHtml);
@@ -529,7 +518,18 @@ function renderDashboard() {
         const percent = npv2 > 0 ? ((diff / npv2) * 100).toFixed(2) : 0;
         
         bannerContainer.className = "comparison-banner mt-3";
-        bannerContainer.innerHTML = `<i class="fa-solid fa-piggy-bank"></i> <span>Skenario 1 (Reaktif) menghemat biaya LCCA sebesar <strong>Rp ${diff.toLocaleString('id-ID')} (${percent}%)</strong> dibanding Skenario 2 (Preventif).</span>`;
+        bannerContainer.innerHTML = `<i class="fa-solid fa-piggy-bank"></i> <span>Skenario 1 (Preventif) menghemat biaya LCCA sebesar <strong>Rp ${diff.toLocaleString('id-ID')} (${percent}%)</strong> dibanding Skenario 2 (Reaktif), dengan umur layan optimal.</span>`;
+    } else if (npv2 < npv1) {
+        // Skenario 2 (Reaktif) lebih hemat
+        if (cardSc2) {
+            cardSc2.classList.add("recommended-card");
+            cardSc2.insertAdjacentHTML("afterbegin", badgeHtml);
+        }
+        const diff = npv1 - npv2;
+        const percent = npv1 > 0 ? ((diff / npv1) * 100).toFixed(2) : 0;
+        
+        bannerContainer.className = "comparison-banner mt-3";
+        bannerContainer.innerHTML = `<i class="fa-solid fa-piggy-bank"></i> <span>Skenario 2 (Reaktif) menghemat biaya LCCA sebesar <strong>Rp ${diff.toLocaleString('id-ID')} (${percent}%)</strong> dibanding Skenario 1 (Preventif).</span>`;
     } else {
         // Sama persis
         bannerContainer.className = "comparison-banner mt-3 bg-warning-glow";
@@ -648,7 +648,7 @@ function renderLccaNpvChart() {
     appState.charts.lcca = new Chart(ctx, {
         type: 'bar',
         data: {
-            labels: ['Skenario 1 (Reaktif)', 'Skenario 2 (Preventif)'],
+            labels: ['Skenario 1 (Preventif)', 'Skenario 2 (Reaktif)'],
             datasets: [{
                 label: 'Total Net Present Value (NPV)',
                 data: [
@@ -656,12 +656,12 @@ function renderLccaNpvChart() {
                     appState.lccaResults.scenarios[2].totalNPV
                 ],
                 backgroundColor: [
-                    'rgba(255, 23, 68, 0.6)',  // Red
-                    'rgba(0, 230, 118, 0.7)'   // Green
+                    'rgba(0, 230, 118, 0.7)',   // Green
+                    'rgba(255, 23, 68, 0.6)'    // Red
                 ],
                 borderColor: [
-                    '#FF1744',
-                    '#00E676'
+                    '#00E676',
+                    '#FF1744'
                 ],
                 borderWidth: 2,
                 borderRadius: 8
@@ -723,20 +723,20 @@ function renderIriDegradationChart(segmentId) {
             labels: years,
             datasets: [
                 {
-                    label: 'Skenario 1 (Reaktif)',
+                    label: 'Skenario 1 (Preventif)',
                     data: iriSc1,
-                    borderColor: '#FF1744',
-                    backgroundColor: 'rgba(255, 23, 68, 0.1)',
-                    tension: 0.1,
-                    borderWidth: 2
-                },
-                {
-                    label: 'Skenario 2 (Preventif)',
-                    data: iriSc2,
                     borderColor: '#00E676',
                     backgroundColor: 'rgba(0, 230, 118, 0.1)',
                     tension: 0.1,
                     borderWidth: 3
+                },
+                {
+                    label: 'Skenario 2 (Reaktif)',
+                    data: iriSc2,
+                    borderColor: '#FF1744',
+                    backgroundColor: 'rgba(255, 23, 68, 0.1)',
+                    tension: 0.1,
+                    borderWidth: 2
                 }
             ]
         },
@@ -793,21 +793,21 @@ function renderSensitivityChart() {
             labels: labels,
             datasets: [
                 {
-                    label: 'Skenario 1 (Reaktif)',
+                    label: 'Skenario 1 (Preventif)',
                     data: sc1Data,
-                    borderColor: '#FF1744',
-                    borderWidth: 2,
+                    borderColor: '#00E676',
+                    borderWidth: 3,
                     pointStyle: 'circle',
-                    pointRadius: 4,
+                    pointRadius: 5,
                     fill: false
                 },
                 {
-                    label: 'Skenario 2 (Preventif)',
+                    label: 'Skenario 2 (Reaktif)',
                     data: sc2Data,
-                    borderColor: '#00E676',
-                    borderWidth: 3,
+                    borderColor: '#FF1744',
+                    borderWidth: 2,
                     pointStyle: 'rect',
-                    pointRadius: 6,
+                    pointRadius: 5,
                     fill: false
                 }
             ]
@@ -1221,8 +1221,8 @@ function setupExports() {
             [""],
             ["RINGKASAN BIAYA NPV LCCA"],
             ["Skenario", "Total NPV (Rupiah)", "Status"],
-            ["Skenario 1 (Reaktif)", npv1, statusSc1],
-            ["Skenario 2 (Preventif)", npv2, statusSc2]
+            ["Skenario 1 (Preventif)", npv1, statusSc1],
+            ["Skenario 2 (Reaktif)", npv2, statusSc2]
         ];
         const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
         XLSX.utils.book_append_sheet(wb, wsSummary, "Ringkasan LCCA");
@@ -1286,7 +1286,7 @@ function setupExports() {
         const sensitivityData = [
             ["ANALISIS SENSITIVITAS TINGKAT DISKONTO"],
             [""],
-            ["Variasi r", "Tingkat Bunga Riil (r)", "NPV Skenario 1 (Reaktif)", "NPV Skenario 2 (Preventif)"]
+            ["Variasi r", "Tingkat Bunga Riil (r)", "NPV Skenario 1 (Preventif)", "NPV Skenario 2 (Reaktif)"]
         ];
         appState.sensitivityResults.forEach(res => {
             const deltaLabel = res.delta === 0 ? "Baseline" : (res.delta > 0 ? `+${res.delta}%` : `${res.delta}%`);

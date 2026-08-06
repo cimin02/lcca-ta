@@ -99,31 +99,49 @@ function projectIRIAndTreatments(segIRI0, segCBR, segSN, roadParams, trafficPara
 
         // 2. Evaluasi Skenario Tindakan Pemeliharaan
         if (scenarioId === 1) {
-            // Skenario 1: Reaktif (Hanya Rutin, Rekonstruksi jika benar-benar hancur/gagal)
-            if (tempIRI >= triggerRekon) {
-                treatment = "Rekonstruksi";
+            // Skenario 1: Skenario Preventif / Proaktif (Kondisi Mantap)
+            // Filosofi: Intervensi dini berbasis 4 tingkatan ambang batas IRI ketat
+            if (tempIRI < 4.0) {
+                treatment = "Pemeliharaan Rutin";
+                cost = calculateRutinCost(length, segLength, width, costRutin);
+                finalIRI = tempIRI;
+            } else if (tempIRI >= 4.0 && tempIRI < 6.0) {
+                treatment = "Pemeliharaan Berkala";
+                cost = calculateTreatmentCost(length, segLength, width, thicknessBerkala, costBerkala);
+                finalIRI = postRepairIRI;
+            } else if (tempIRI >= 6.0 && tempIRI < 8.0) {
+                treatment = "Rehabilitasi Minor";
+                cost = calculateTreatmentCost(length, segLength, width, thicknessRehab, costRehab);
+                finalIRI = postRepairIRI;
+            } else {
+                // tempIRI >= 8.0
+                treatment = "Rekonstruksi / Rehabilitasi Mayor";
                 cost = calculateTreatmentCost(length, segLength, width, thicknessRekon, costRekon);
                 finalIRI = postRepairIRI;
                 // Reset umur struktural (t) dan SNC
                 t_virtual = 0;
                 currentSNC = initialSNC;
-            } else {
-                treatment = "Pemeliharaan Rutin";
-                cost = calculateRutinCost(length, segLength, width, costRutin);
-                finalIRI = tempIRI;
             }
         } 
         else if (scenarioId === 2) {
-            // Skenario 2: Preventif Berbasis IRI (Overlay berkala segera saat menyentuh batas sedang)
-            if (tempIRI >= triggerBerkala) {
-                treatment = "Pemeliharaan Berkala";
-                cost = calculateTreatmentCost(length, segLength, width, thicknessBerkala, costBerkala);
-                finalIRI = postRepairIRI;
-                // Overlay berkala tidak mereset umur struktural
-            } else {
+            // Skenario 2: Skenario Reaktif / Penanganan Tertunda (Standar Pelayanan Minimum)
+            // Filosofi: Membiarkan perkerasan terdegradasi hingga batas regulasi sebelum penanganan berat
+            if (tempIRI < 6.0) {
                 treatment = "Pemeliharaan Rutin";
                 cost = calculateRutinCost(length, segLength, width, costRutin);
                 finalIRI = tempIRI;
+            } else if (tempIRI >= 6.0 && tempIRI < 10.0) {
+                treatment = "Pemeliharaan Berkala / Overlay Struktural";
+                cost = calculateTreatmentCost(length, segLength, width, thicknessRehab, costRehab);
+                finalIRI = postRepairIRI;
+            } else {
+                // tempIRI >= 10.0
+                treatment = "Rekonstruksi Total";
+                cost = calculateTreatmentCost(length, segLength, width, thicknessRekon, costRekon);
+                finalIRI = postRepairIRI;
+                // Reset umur struktural (t) dan SNC
+                t_virtual = 0;
+                currentSNC = initialSNC;
             }
         }
 
@@ -179,8 +197,8 @@ function runLCCA(segments, roadParams, trafficParams, economicParams, treatmentP
     const results = {
         r_riil,
         scenarios: {
-            1: { name: "Skenario 1 (Reaktif)", totalNPV: 0, segmentsData: [] },
-            2: { name: "Skenario 2 (Preventif)", totalNPV: 0, segmentsData: [] }
+            1: { name: "Skenario 1 (Preventif)", totalNPV: 0, segmentsData: [] },
+            2: { name: "Skenario 2 (Reaktif)", totalNPV: 0, segmentsData: [] }
         }
     };
 

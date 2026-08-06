@@ -22,7 +22,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js?v=2"></script>
     
     <!-- Link CSS Custom -->
-    <link rel="stylesheet" href="style.css?v=10">
+    <link rel="stylesheet" href="style.css?v=11">
 </head>
 <body class="dark-theme">
     <!-- Background Decorators -->
@@ -373,15 +373,17 @@
                         <div class="strip-maps-container mt-4">
                             <!-- Scenario 1 -->
                             <div class="scenario-strip-group">
-                                <h3>Skenario 1: Reaktif (Hanya Rutin + Rekonstruksi jika IRI &ge; <span class="trigger-rekon-val">10</span>)</h3>
+                                <h3>Skenario 1: Skenario Preventif / Proaktif (Kondisi Mantap)</h3>
+                                <p class="scenario-desc text-muted mb-2"><i class="fa-solid fa-circle-info text-primary"></i> "Mencegah lebih murah daripada membangun kembali". Melakukan pelapisan aspal tipis secara berkala di awal untuk meredam kerusakan akibat air dan beban berat, menjaga jalan dalam kondisi mantap.</p>
                                 <div class="strip-wrapper" id="strip-map-sc1">
                                     <!-- Dinamis -->
                                 </div>
                             </div>
 
                             <!-- Scenario 2 -->
-                            <div class="scenario-strip-group">
-                                <h3>Skenario 2: Preventif Berbasis IRI (Overlay Berkala segera saat IRI &ge; <span class="trigger-berkala-val">4</span>)</h3>
+                            <div class="scenario-strip-group mt-3">
+                                <h3>Skenario 2: Skenario Reaktif / Penanganan Tertunda (Standar Pelayanan Minimum)</h3>
+                                <p class="scenario-desc text-muted mb-2"><i class="fa-solid fa-circle-info text-warning"></i> "Maksimalkan masa pakai aspal eksisting". Menekan anggaran konstruksi awal dengan membiarkan perkerasan memikul beban hingga mendekati batas regulasi sebelum dilakukan penanganan berat.</p>
                                 <div class="strip-wrapper" id="strip-map-sc2">
                                     <!-- Dinamis -->
                                 </div>
@@ -396,20 +398,20 @@
                     <div class="dashboard-grid">
                         <!-- Summary Card 1 -->
                         <div class="summary-card glass" id="card-sc1">
-                            <div class="icon-wrapper bg-danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="icon-wrapper bg-success"><i class="fa-solid fa-shield-halved"></i></div>
                             <div class="info">
-                                <h3>NPV Skenario 1 (Reaktif)</h3>
-                                <span class="value text-danger" id="npv-sc1-display">Rp0</span>
+                                <h3>NPV Skenario 1 (Preventif)</h3>
+                                <span class="value text-success" id="npv-sc1-display">Rp0</span>
                                 <p class="desc">Biaya Pemeliharaan Total</p>
                             </div>
                         </div>
 
                         <!-- Summary Card 2 -->
                         <div class="summary-card glass" id="card-sc2">
-                            <div class="icon-wrapper bg-success"><i class="fa-solid fa-shield-halved"></i></div>
+                            <div class="icon-wrapper bg-danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
                             <div class="info">
-                                <h3>NPV Skenario 2 (Preventif)</h3>
-                                <span class="value text-success" id="npv-sc2-display">Rp0</span>
+                                <h3>NPV Skenario 2 (Reaktif)</h3>
+                                <span class="value text-danger" id="npv-sc2-display">Rp0</span>
                                 <p class="desc">Biaya Pemeliharaan Total</p>
                             </div>
                         </div>
@@ -465,8 +467,8 @@
                                         <tr>
                                             <th>Variasi r</th>
                                             <th>Tingkat Bunga Riil (r)</th>
-                                            <th>NPV Skenario 1 (Reaktif)</th>
-                                            <th>NPV Skenario 2 (Preventif)</th>
+                                            <th>NPV Skenario 1 (Preventif)</th>
+                                            <th>NPV Skenario 2 (Reaktif)</th>
                                         </tr>
                                     </thead>
                                     <tbody id="sensitivity-table-body">
@@ -502,8 +504,8 @@
                                 <thead>
                                     <tr>
                                         <th rowspan="2" class="text-center" width="80">Tahun</th>
-                                        <th colspan="2" class="text-center bg-sc-1">Skenario 1 (Reaktif)</th>
-                                        <th colspan="2" class="text-center bg-sc-2">Skenario 2 (Preventif)</th>
+                                        <th colspan="2" class="text-center bg-sc-1">Skenario 1 (Preventif)</th>
+                                        <th colspan="2" class="text-center bg-sc-2">Skenario 2 (Reaktif)</th>
                                     </tr>
                                     <tr>
                                         <th class="bg-sc-1-light text-center">Biaya Riil</th>
@@ -535,7 +537,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Script Utama Program -->
-    <script src="calculations.js?v=9"></script>
-    <script src="app.js?v=9"></script>
+    <script src="calculations.js?v=11"></script>
+    <script src="app.js?v=11"></script>
 </body>
 </html>
