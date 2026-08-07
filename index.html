@@ -22,7 +22,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js?v=2"></script>
     
     <!-- Link CSS Custom -->
-    <link rel="stylesheet" href="style.css?v=12">
+    <link rel="stylesheet" href="style.css?v=13">
 </head>
 <body class="dark-theme">
     <!-- Background Decorators -->
@@ -230,7 +230,7 @@
                         </div>
                         <div class="treatment-setting-row">
                             <label title="Rekonstruksi Penuh">Rekonstruksi</label>
-                            <input type="number" id="trigger-rekon" value="8.0" step="0.1" min="1" max="25" required>
+                            <input type="number" id="trigger-rekon" value="10.0" step="0.1" min="1" max="25" required>
                             <input type="number" id="cost-rekon" value="4500000" min="0" placeholder="Rp/m3" title="Harga per m3 rekonstruksi" required>
                         </div>
                         
@@ -364,16 +364,16 @@
                         <!-- Legend -->
                         <div class="legend-container mt-3">
                             <div class="legend-item"><span class="legend-color legend-good"></span> Baik (IRI &lt; 4)</div>
-                            <div class="legend-item"><span class="legend-color legend-fair"></span> Sedang (IRI 4 - 8)</div>
-                            <div class="legend-item"><span class="legend-color legend-poor"></span> Rusak Ringan (IRI 8 - 12)</div>
-                            <div class="legend-item"><span class="legend-color legend-bad"></span> Rusak Berat (IRI &gt; 12)</div>
+                            <div class="legend-item"><span class="legend-color legend-fair"></span> Sedang (IRI 4 - 6)</div>
+                            <div class="legend-item"><span class="legend-color legend-poor"></span> Rusak Ringan (IRI 6 - 8)</div>
+                            <div class="legend-item"><span class="legend-color legend-bad"></span> Rusak Berat (IRI &ge; 8)</div>
                         </div>
 
                         <!-- Strip Maps for Scenarios -->
                         <div class="strip-maps-container mt-4">
                             <!-- Scenario 1 -->
                             <div class="scenario-strip-group">
-                                <h3>Skenario 1: Skenario Preventif / Proaktif (Kondisi Mantap)</h3>
+                                <h3>Skenario 1: Skenario Preventif / Proaktif (Kondisi Mantap - Penanganan Struktural jika IRI &ge; <span class="trigger-rehab-val">8.0</span> m/km)</h3>
                                 <p class="scenario-desc text-muted mb-2"><i class="fa-solid fa-circle-info text-primary"></i> "Mencegah lebih murah daripada membangun kembali". Melakukan pelapisan aspal tipis secara berkala di awal untuk meredam kerusakan akibat air dan beban berat, menjaga jalan dalam kondisi mantap.</p>
                                 <div class="strip-wrapper" id="strip-map-sc1">
                                     <!-- Dinamis -->
@@ -382,7 +382,7 @@
 
                             <!-- Scenario 2 -->
                             <div class="scenario-strip-group mt-3">
-                                <h3>Skenario 2: Skenario Reaktif / Penanganan Tertunda (Standar Pelayanan Minimum)</h3>
+                                <h3>Skenario 2: Skenario Reaktif / Penanganan Tertunda (Standar Pelayanan Minimum - Rekonstruksi Total jika IRI &ge; <span class="trigger-rekon-val">10.0</span> m/km)</h3>
                                 <p class="scenario-desc text-muted mb-2"><i class="fa-solid fa-circle-info text-warning"></i> "Maksimalkan masa pakai aspal eksisting". Menekan anggaran konstruksi awal dengan membiarkan perkerasan memikul beban hingga mendekati batas regulasi sebelum dilakukan penanganan berat.</p>
                                 <div class="strip-wrapper" id="strip-map-sc2">
                                     <!-- Dinamis -->
@@ -537,7 +537,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Script Utama Program -->
-    <script src="calculations.js?v=12"></script>
-    <script src="app.js?v=12"></script>
+    <script src="calculations.js?v=13"></script>
+    <script src="app.js?v=13"></script>
 </body>
 </html>

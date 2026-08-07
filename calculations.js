@@ -97,49 +97,36 @@ function projectIRIAndTreatments(segIRI0, segCBR, segSN, roadParams, trafficPara
 
         // 2. Evaluasi Skenario Tindakan Pemeliharaan
         if (scenarioId === 1) {
-            // Skenario 1: Skenario Preventif / Proaktif (Kondisi Mantap)
-            // Filosofi: Intervensi dini berbasis 4 tingkatan ambang batas IRI ketat
-            if (tempIRI < 4.0) {
+            // Skenario 1: Preventif / Proaktif (Kondisi Mantap)
+            // Penanganan berat dipicu saat menyentuh limit maksimal (triggerRehab, default 8.0 m/km)
+            const maxLimit = triggerRehab || 8.0;
+            if (tempIRI < maxLimit) {
                 treatment = "Pemeliharaan Rutin";
                 cost = calculateRutinCost(length, segLength, width, costRutin);
                 finalIRI = tempIRI;
                 costBreakdown.rutin = Math.round(cost);
-            } else if (tempIRI >= 4.0 && tempIRI < 6.0) {
-                treatment = "Pemeliharaan Berkala";
-                cost = calculateTreatmentCost(length, segLength, width, thicknessBerkala, costBerkala);
-                finalIRI = postRepairIRI;
-                costBreakdown.berkala = Math.round(cost);
-            } else if (tempIRI >= 6.0 && tempIRI < 8.0) {
-                treatment = "Rehabilitasi Minor";
-                cost = calculateTreatmentCost(length, segLength, width, thicknessRehab, costRehab);
-                finalIRI = postRepairIRI;
-                costBreakdown.rehab = Math.round(cost);
             } else {
-                // tempIRI >= 8.0
-                treatment = "Rekonstruksi / Rehabilitasi Mayor";
-                cost = calculateTreatmentCost(length, segLength, width, thicknessRekon, costRekon);
+                // tempIRI >= maxLimit (8.0 m/km) -> Rehabilitasi Struktural
+                treatment = "Rehabilitasi Struktural";
+                cost = calculateTreatmentCost(length, segLength, width, thicknessRehab, costRehab);
                 finalIRI = postRepairIRI;
                 // Reset umur struktural (t) dan SNC
                 t_virtual = 0;
                 currentSNC = initialSNC;
-                costBreakdown.rekon = Math.round(cost);
+                costBreakdown.rehab = Math.round(cost);
             }
         } 
         else if (scenarioId === 2) {
-            // Skenario 2: Skenario Reaktif / Penanganan Tertunda (Standar Pelayanan Minimum)
-            // Filosofi: Membiarkan perkerasan terdegradasi hingga batas regulasi sebelum penanganan berat
-            if (tempIRI < 6.0) {
+            // Skenario 2: Reaktif / Penanganan Tertunda (Standar Pelayanan Minimum)
+            // Penanganan berat dipicu saat menyentuh limit maksimal (triggerRekon, default 10.0 m/km)
+            const maxLimit = triggerRekon || 10.0;
+            if (tempIRI < maxLimit) {
                 treatment = "Pemeliharaan Rutin";
                 cost = calculateRutinCost(length, segLength, width, costRutin);
                 finalIRI = tempIRI;
                 costBreakdown.rutin = Math.round(cost);
-            } else if (tempIRI >= 6.0 && tempIRI < 10.0) {
-                treatment = "Pemeliharaan Berkala / Overlay Struktural";
-                cost = calculateTreatmentCost(length, segLength, width, thicknessRehab, costRehab);
-                finalIRI = postRepairIRI;
-                costBreakdown.berkala = Math.round(cost);
             } else {
-                // tempIRI >= 10.0
+                // tempIRI >= maxLimit (10.0 m/km) -> Rekonstruksi Total
                 treatment = "Rekonstruksi Total";
                 cost = calculateTreatmentCost(length, segLength, width, thicknessRekon, costRekon);
                 finalIRI = postRepairIRI;
@@ -187,9 +174,9 @@ function calculateTreatmentCost(totalLength, segLength, width, thickness, unitCo
 
 // Klasifikasi Label Kondisi Jalan berdasarkan Nilai IRI
 function getConditionLabel(iri) {
-    if (iri < 4) return "Baik";
-    if (iri >= 4 && iri < 8) return "Sedang";
-    if (iri >= 8 && iri <= 12) return "Rusak Ringan";
+    if (iri < 4.0) return "Baik";
+    if (iri >= 4.0 && iri < 6.0) return "Sedang";
+    if (iri >= 6.0 && iri < 8.0) return "Rusak Ringan";
     return "Rusak Berat";
 }
 

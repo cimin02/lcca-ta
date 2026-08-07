@@ -441,11 +441,11 @@ function renderStripMaps(year) {
             const proj = segData.projections[year];
             const box = document.createElement("div");
             
-            // Tentukan kelas warna kondisi
+            // Tentukan kelas warna kondisi (Baik <4, Sedang 4-6, Rusak Ringan 6-8, Rusak Berat >=8)
             let condClass = "bg-good";
-            if (proj.IRI >= triggerRekon) condClass = "bg-bad";
-            else if (proj.IRI >= triggerRehab) condClass = "bg-poor";
-            else if (proj.IRI >= triggerBerkala) condClass = "bg-fair";
+            if (proj.IRI >= 8.0) condClass = "bg-bad";
+            else if (proj.IRI >= 6.0) condClass = "bg-poor";
+            else if (proj.IRI >= 4.0) condClass = "bg-fair";
             
             box.className = `strip-seg-box ${condClass}`;
             box.innerText = segData.segmentId;
